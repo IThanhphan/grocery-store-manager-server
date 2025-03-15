@@ -9,6 +9,7 @@ router.put('/update-product-information', productController.updateProduct)
 router.delete('/remove-product-from-system', productController.deleteProduct)
 router.get('/get-product-list-by-category', productController.getProductsByCategory)
 router.get('/get-a-list-of-products-from-a-supplier', productController.getProductsBySupplier)
-router.get('/get-list-of-expired-products', productController.getExpiredProducts)
+router.get('/get-nearly-expired-products', productController.getNearlyExpiredProducts)
+router.get('/get-expired-products', productController.getExpiredProducts)
 
 module.exports = router
