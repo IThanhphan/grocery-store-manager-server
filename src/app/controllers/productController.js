@@ -29,14 +29,14 @@ const productController = {
   // Thêm một sản phẩm mới
   addProduct: async (req, res) => {
     try {
-      const { name, category, supplierId, importPrice, sellPrice, stock, expirationDate } = req.body
+      const { name, categoryId, supplierId, importPrice, sellPrice, stock, expirationDate } = req.body
 
-      if (!name || !category || !supplierId || !importPrice || !sellPrice || !expirationDate) {
+      if (!name || !categoryId || !supplierId || !importPrice || !sellPrice || !expirationDate) {
         return res.status(400).json({ message: 'Missing required fields' })
       }
 
-      console.log({ name, category, supplierId, importPrice, sellPrice, expirationDate })
-      const newProduct = new Product({ name, category, supplierId, importPrice, sellPrice, stock, expirationDate })
+      console.log({ name, categoryId, supplierId, importPrice, sellPrice, expirationDate })
+      const newProduct = new Product({ name, categoryId, supplierId, importPrice, sellPrice, stock, expirationDate })
       await newProduct.save()
 
       res.status(201).json(newProduct)
@@ -75,7 +75,7 @@ const productController = {
     }
   },
 
-  // Lấy danh sách sản phẩm theo danh mục
+  // Lấy danh sách sản phẩm theo loại sản phẩm
   getProductsByCategory: async (req, res) => {
     try {
       const { categoryId } = req.query
