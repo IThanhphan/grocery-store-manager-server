@@ -54,7 +54,7 @@ const authController = {
         httpOnly: true,
         secure: false,
         path: '/',
-        sameSite: 'none'
+        sameSite: 'strict'
       })
       const { password, ...other } = user._doc
       res.status(200).json({ ...other, accessToken })
@@ -78,14 +78,19 @@ const authController = {
         httpOnly: true,
         secure: false,
         path: '/',
-        sameSite: 'none'
+        sameSite: 'strict'
       })
       res.status(200).json({ accessToken: newAccessToken })
     })
   },
 
   logoutUser: async (req, res) => {
-    res.clearCookie('refreshToken')
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: false,
+      path: '/',
+      sameSite: 'strict'
+    })
     res.status(200).json('Logout successfully')
   }
 }
