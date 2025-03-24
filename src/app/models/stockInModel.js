@@ -12,6 +12,11 @@ const stockIntSchema = new mongoose.Schema({
     ref: 'Supplier',
     required: true
   },
+  employeeId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Employee',
+    required: true
+  },
   importDate: {
     type: Date,
     default: Date.now
@@ -44,7 +49,7 @@ stockIntSchema.pre('validate', async function (next) {
       { $inc: { seq: 1 } },
       { new: true, upsert: true }
     )
-    this.productId = `SP-${counter.seq.toString().padStart(5, '0')}`
+    this.stockId = `NH-${counter.seq.toString().padStart(5, '0')}`
   }
   next()
 })

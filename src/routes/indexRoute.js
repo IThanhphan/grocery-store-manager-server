@@ -5,7 +5,7 @@ const customerRoute = require('./customerRoute')
 const employeeRoute = require('./employeeRoute')
 const orderRoute = require('./orderRoute')
 const categoryRoute = require('./categoryRoute')
-const stockInRoute = require('./stockInRoute')
+const stockInRoute = require('./stockIntRoute')
 
 function route(app) {
   app.use('/auth', authRoute)
