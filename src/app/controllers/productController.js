@@ -29,13 +29,13 @@ const productController = {
   // Thêm một sản phẩm mới
   addProduct: async (req, res) => {
     try {
-      const { name, categoryId, supplierId, importPrice, sellPrice, stock, expirationDate } = req.body
+      const { name, categoryId, supplierId, brand, unit, importPrice, sellPrice, stock, expirationDate } = req.body
 
-      if (!name || !categoryId || !supplierId || !importPrice || !sellPrice || !expirationDate) {
+      if (!name || !categoryId || !supplierId || !brand || !unit || !importPrice || !sellPrice || !expirationDate) {
         return res.status(400).json({ message: 'Missing required fields' })
       }
 
-      console.log({ name, categoryId, supplierId, importPrice, sellPrice, expirationDate })
+      console.log({ name, categoryId, supplierId, brand, unit, importPrice, sellPrice, stock, expirationDate })
       const newProduct = new Product({ name, categoryId, supplierId, importPrice, sellPrice, stock, expirationDate })
       await newProduct.save()
 
@@ -140,6 +140,46 @@ const productController = {
       res.status(200).json(expiredProducts)
     } catch (err) {
       res.status(500).json({ error: err.message })
+    }
+  },
+
+  // Lấy danh sách sản phẩm theo thương hiệu cụ thể
+  getProductsByBrand: async (req, res) => {
+    try {
+      const { brand } = req.query
+      if (!brand) return res.status(400).json({ message: 'Missing brand name' })
+
+      const products = await Product.find({ brand: brand })
+      if (products.length === 0) return res.status(404).json({ message: 'No products found for this brand' })
+
+      res.status(200).json(products)
+    } catch (err) {
+      res.status(500).json({ error: err.message })
+    }
+  },
+
+  //Lấy danh sách đơn vị tính của sản phẩm
+  getAllUnits: async (req, res) => {
+    try {
+      const units = await Product.distinct('unit');
+      res.status(200).json(units);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  },
+
+  // Lọc sản phẩm theo đơn vị tính
+  getProductsByUnit: async (req, res) => {
+    try {
+      const { unit } = req.query;
+      if (!unit) return res.status(400).json({ message: 'Missing unit name' });
+
+      const products = await Product.find({ unit: unit });
+      if (products.length === 0) return res.status(404).json({ message: 'No products found for this unit' });
+
+      res.status(200).json(products);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
     }
   }
 }

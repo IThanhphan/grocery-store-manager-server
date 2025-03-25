@@ -11,5 +11,8 @@ router.get('/get-product-list-by-category', productController.getProductsByCateg
 router.get('/get-a-list-of-products-from-a-supplier', productController.getProductsBySupplier)
 router.get('/get-nearly-expired-products', productController.getNearlyExpiredProducts)
 router.get('/get-expired-products', productController.getExpiredProducts)
+router.get('/get-products-by-brand', productController.getProductsByBrand)
+router.get('/get-all-units', productController.getAllUnits)
+router.get('/get-products-by-unit', productController.getProductsByUnit)
 
 module.exports = router
