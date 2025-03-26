@@ -20,7 +20,7 @@ categorySchema.pre('validate', async function (next) {
       { $inc: { seq: 1 } },
       { new: true, upsert: true }
     )
-    this.categoryId = `NCC-${counter.seq.toString().padStart(5, '0')}`
+    this.categoryId = `LSP-${counter.seq.toString().padStart(5, '0')}`
   }
   next()
 })

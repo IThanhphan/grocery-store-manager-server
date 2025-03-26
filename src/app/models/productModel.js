@@ -21,6 +21,14 @@ const productSchema = new mongoose.Schema({
     ref: 'Supplier',
     required: true
   },
+  brand: {
+    type: String,
+    required: true
+  },
+  unit: {
+    type: String,
+    required: true
+  },
   importPrice: {
     type: Number,
     required: true
