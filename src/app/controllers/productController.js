@@ -76,7 +76,25 @@ const productController = {
       const newProduct = new Product({ name, categoryId, supplierId, brand, unit, importPrice, sellPrice, stock, expirationDate, image })
       await newProduct.save()
 
-      res.status(201).json(newProduct)
+      const populatedProduct = await Product.findById(newProduct._id)
+        .populate('categoryId', 'name')
+        .populate('supplierId', 'name')
+
+      res.status(201).json({
+        productId: populatedProduct.productId,
+        name: populatedProduct.name,
+        categoryName: populatedProduct.categoryId ? populatedProduct.categoryId.name : 'Unknown',
+        supplierName: populatedProduct.supplierId ? populatedProduct.supplierId.name : 'Unknown',
+        brand: populatedProduct.brand,
+        unit: populatedProduct.unit,
+        importPrice: populatedProduct.importPrice,
+        sellPrice: populatedProduct.sellPrice,
+        stock: populatedProduct.stock,
+        expirationDate: populatedProduct.expirationDate,
+        image: populatedProduct.image,
+        createdAt: populatedProduct.createdAt,
+        updatedAt: populatedProduct.updatedAt
+      })
     } catch (err) {
       res.status(500).json({ error: err.message })
     }
@@ -89,9 +107,25 @@ const productController = {
       if (!id) return res.status(400).json({ message: 'Missing product ID' })
 
       const updatedProduct = await Product.findByIdAndUpdate(id, req.body, { new: true, runValidators: true })
+        .populate('categoryId', 'name')
+        .populate('supplierId', 'name')
       if (!updatedProduct) return res.status(404).json({ message: 'Product not found' })
 
-      res.status(200).json(updatedProduct)
+      res.status(200).json({
+        productId: updatedProduct.productId,
+        name: updatedProduct.name,
+        categoryName: updatedProduct.categoryId ? updatedProduct.categoryId.name : 'Unknown',
+        supplierName: updatedProduct.supplierId ? updatedProduct.supplierId.name : 'Unknown',
+        brand: updatedProduct.brand,
+        unit: updatedProduct.unit,
+        importPrice: updatedProduct.importPrice,
+        sellPrice: updatedProduct.sellPrice,
+        stock: updatedProduct.stock,
+        expirationDate: updatedProduct.expirationDate,
+        image: updatedProduct.image,
+        createdAt: updatedProduct.createdAt,
+        updatedAt: updatedProduct.updatedAt
+      })
     } catch (err) {
       res.status(500).json({ error: err.message })
     }
