@@ -146,6 +146,131 @@ const orderController = {
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
+  },
+
+  // Tính doanh thu theo tháng
+  getMonthlyRevenue: async (req, res) => {
+    try {
+      const { year, month } = req.query;
+      if (!year || !month) {
+        return res.status(400).json({ message: 'Missing year or month' });
+      }
+
+      const startDate = new Date(`${year}-${month}-01T00:00:00.000Z`);
+      const endDate = new Date(startDate);
+      endDate.setMonth(endDate.getMonth() + 1);
+
+      const orders = await Order.find({
+        orderDate: { $gte: startDate, $lt: endDate },
+      });
+
+      const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+
+      res.status(200).json({ month, year, totalRevenue });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  },
+
+  //Tính doanh thu của từng tháng trong năm
+  getYearlyRevenueByMonth: async (req, res) => {
+    try {
+      const { year } = req.query;
+      if (!year) {
+        return res.status(400).json({ message: 'Missing year' });
+      }
+
+      let monthlyRevenue = Array(12).fill(0); // Mảng lưu doanh thu từng tháng
+
+      for (let month = 1; month <= 12; month++) {
+        const startDate = new Date(`${year}-${month}-01T00:00:00.000Z`);
+        const endDate = new Date(startDate);
+        endDate.setMonth(endDate.getMonth() + 1);
+
+        const orders = await Order.find({
+          orderDate: { $gte: startDate, $lt: endDate },
+        });
+
+        monthlyRevenue[month - 1] = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+      }
+
+      res.status(200).json({ year, monthlyRevenue });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  },
+
+  //10 sản phẩm bán chạy nhất trong tháng
+  getTopSellingProductsMonthly: async (req, res) => {
+    try {
+      const { year, month } = req.query;
+      if (!year || !month) {
+        return res.status(400).json({ message: 'Missing year or month' });
+      }
+
+      const startDate = new Date(`${year}-${month}-01T00:00:00.000Z`);
+      const endDate = new Date(startDate);
+      endDate.setMonth(endDate.getMonth() + 1);
+
+      const orders = await Order.find({
+        orderDate: { $gte: startDate, $lt: endDate },
+      });
+
+      let productSales = {};
+
+      orders.forEach(order => {
+        order.items.forEach(item => {
+          if (!productSales[item.productId]) {
+            productSales[item.productId] = { productId: item.productId, name: item.name, quantity: 0 };
+          }
+          productSales[item.productId].quantity += item.quantity;
+        });
+      });
+
+      const topProducts = Object.values(productSales)
+        .sort((a, b) => b.quantity - a.quantity)
+        .slice(0, 10);
+
+      res.status(200).json(topProducts);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  },
+
+  //10 sản phẩm bán chạy nhất trong năm
+  getTopSellingProductsYearly: async (req, res) => {
+    try {
+      const { year } = req.query;
+      if (!year) {
+        return res.status(400).json({ message: 'Missing year' });
+      }
+
+      const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
+      const endDate = new Date(`${year}-12-31T23:59:59.999Z`);
+
+      const orders = await Order.find({
+        orderDate: { $gte: startDate, $lte: endDate },
+      });
+
+      let productSales = {};
+
+      orders.forEach(order => {
+        order.items.forEach(item => {
+          if (!productSales[item.productId]) {
+            productSales[item.productId] = { productId: item.productId, name: item.name, quantity: 0 };
+          }
+          productSales[item.productId].quantity += item.quantity;
+        });
+      });
+
+      const topProducts = Object.values(productSales)
+        .sort((a, b) => b.quantity - a.quantity)
+        .slice(0, 10);
+
+      res.status(200).json(topProducts);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
   }
 }
 
