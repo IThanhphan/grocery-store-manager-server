@@ -9,6 +9,7 @@ const productController = {
         .populate('supplierId', 'name')
 
       const formattedProducts = products.map(product => ({
+        _id: product._id,
         productId: product.productId,
         name: product.name,
         categoryName: product.categoryId ? product.categoryId.name : 'Unknown',
