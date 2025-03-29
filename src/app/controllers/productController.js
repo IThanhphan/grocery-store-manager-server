@@ -1,16 +1,4 @@
 const Product = require('../models/productModel')
-const multer = require('multer')
-const path = require('path')
-
-// Cấu hình lưu trữ ảnh sản phẩm
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/') // Thư mục lưu ảnh
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname)) // Đổi tên ảnh
-  }
-})
 
 const productController = {
   // Lấy danh sách tất cả sản phẩm
@@ -24,13 +12,14 @@ const productController = {
         productId: product.productId,
         name: product.name,
         categoryName: product.categoryId ? product.categoryId.name : 'Unknown',
-        supplierName: product.supplierId ? product.supplierId.name : 'Unknown',        
+        supplierName: product.supplierId ? product.supplierId.name : 'Unknown',
         brand: product.brand,
         unit: product.unit,
         importPrice: product.importPrice,
         sellPrice: product.sellPrice,
         stock: product.stock,
         expirationDate: product.expirationDate,
+        image: product.image,
         createdAt: product.createdAt,
         updatedAt: product.updatedAt
       }))
@@ -50,8 +39,6 @@ const productController = {
       const product = await Product.findById(id)
         .populate('categoryId', 'name')
         .populate('supplierId', 'name')
-        .lean()
-      console.log("Populated Product:", product)
 
       if (!product) return res.status(404).json({ message: 'Product not found' })
 
@@ -59,13 +46,14 @@ const productController = {
         productId: product.productId,
         name: product.name,
         categoryName: product.categoryId ? product.categoryId.name : 'Unknown',
-        supplierName: product.supplierId ? product.supplierId.name : 'Unknown',        
+        supplierName: product.supplierId ? product.supplierId.name : 'Unknown',
         brand: product.brand,
         unit: product.unit,
         importPrice: product.importPrice,
         sellPrice: product.sellPrice,
         stock: product.stock,
         expirationDate: product.expirationDate,
+        image: product.image,
         createdAt: product.createdAt,
         updatedAt: product.updatedAt
       })
@@ -77,14 +65,14 @@ const productController = {
   // Thêm một sản phẩm mới
   addProduct: async (req, res) => {
     try {
-      const { name, categoryId, supplierId, brand, unit, importPrice, sellPrice, stock, expirationDate } = req.body
+      const { name, categoryId, supplierId, brand, unit, importPrice, sellPrice, stock, expirationDate, image } = req.body
 
       if (!name || !categoryId || !supplierId || !brand || !unit || !importPrice || !sellPrice || !expirationDate) {
         return res.status(400).json({ message: 'Missing required fields' })
       }
 
-      console.log({ name, categoryId, supplierId, brand, unit, importPrice, sellPrice, stock, expirationDate })
-      const newProduct = new Product({ name, categoryId, supplierId, brand, unit, importPrice, sellPrice, stock, expirationDate })
+      console.log({ name, categoryId, supplierId, brand, unit, importPrice, sellPrice, stock, expirationDate, image })
+      const newProduct = new Product({ name, categoryId, supplierId, brand, unit, importPrice, sellPrice, stock, expirationDate, image })
       await newProduct.save()
 
       res.status(201).json(newProduct)
