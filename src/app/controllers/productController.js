@@ -1,11 +1,41 @@
 const Product = require('../models/productModel')
+const multer = require('multer')
+const path = require('path')
+
+// Cấu hình lưu trữ ảnh sản phẩm
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/') // Thư mục lưu ảnh
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname)) // Đổi tên ảnh
+  }
+})
 
 const productController = {
   // Lấy danh sách tất cả sản phẩm
   getAllProducts: async (req, res) => {
     try {
       const products = await Product.find()
-      res.status(200).json(products)
+        .populate('categoryId', 'name')
+        .populate('supplierId', 'name')
+
+      const formattedProducts = products.map(product => ({
+        productId: product.productId,
+        name: product.name,
+        categoryName: product.categoryId ? product.categoryId.name : 'Unknown',
+        supplierName: product.supplierId ? product.supplierId.name : 'Unknown',        
+        brand: product.brand,
+        unit: product.unit,
+        importPrice: product.importPrice,
+        sellPrice: product.sellPrice,
+        stock: product.stock,
+        expirationDate: product.expirationDate,
+        createdAt: product.createdAt,
+        updatedAt: product.updatedAt
+      }))
+
+      res.status(200).json(formattedProducts)
     } catch (err) {
       res.status(500).json({ error: err.message })
     }
@@ -18,9 +48,27 @@ const productController = {
       if (!id) return res.status(404).json({ message: 'Missing product ID' })
 
       const product = await Product.findById(id)
+        .populate('categoryId', 'name')
+        .populate('supplierId', 'name')
+        .lean()
+      console.log("Populated Product:", product)
+
       if (!product) return res.status(404).json({ message: 'Product not found' })
 
-      res.status(200).json(product)
+      res.status(200).json({
+        productId: product.productId,
+        name: product.name,
+        categoryName: product.categoryId ? product.categoryId.name : 'Unknown',
+        supplierName: product.supplierId ? product.supplierId.name : 'Unknown',        
+        brand: product.brand,
+        unit: product.unit,
+        importPrice: product.importPrice,
+        sellPrice: product.sellPrice,
+        stock: product.stock,
+        expirationDate: product.expirationDate,
+        createdAt: product.createdAt,
+        updatedAt: product.updatedAt
+      })
     } catch (err) {
       res.status(500).json({ error: err.message })
     }
@@ -36,7 +84,7 @@ const productController = {
       }
 
       console.log({ name, categoryId, supplierId, brand, unit, importPrice, sellPrice, stock, expirationDate })
-      const newProduct = new Product({ name, categoryId, supplierId, importPrice, sellPrice, stock, expirationDate })
+      const newProduct = new Product({ name, categoryId, supplierId, brand, unit, importPrice, sellPrice, stock, expirationDate })
       await newProduct.save()
 
       res.status(201).json(newProduct)

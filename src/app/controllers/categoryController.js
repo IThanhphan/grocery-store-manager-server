@@ -14,11 +14,11 @@ const categoryController = {
   // Thêm một loại hàng mới
   addNewCategory: async (req, res) => {
     try {
-      const { categoryName } = req.body
+      const { name } = req.body
 
-      if (!categoryName) return res.status(400).json({ message: 'Missing required fields' })
-      console.log({ categoryName })
-      const newCategory = new Category({ categoryName })
+      if (!name) return res.status(400).json({ message: 'Missing required fields' })
+      console.log({ name })
+      const newCategory = new Category({ name })
       await newCategory.save()
 
       res.status(201).json(newCategory)

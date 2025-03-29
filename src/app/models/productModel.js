@@ -45,6 +45,9 @@ const productSchema = new mongoose.Schema({
   expirationDate: {
     type: Date,
     required: true
+  },
+  imageUrl: {
+    type: String
   }
 }, { timestamps: true })
 
