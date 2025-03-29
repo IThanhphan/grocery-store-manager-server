@@ -1,4 +1,6 @@
 const Product = require('../models/productModel')
+const Category = require('../models/categoryModel')
+const Supplier = require('../models/supplierModel')
 
 const productController = {
   // Lấy danh sách tất cả sản phẩm
@@ -66,14 +68,20 @@ const productController = {
   // Thêm một sản phẩm mới
   addProduct: async (req, res) => {
     try {
-      const { name, categoryId, supplierId, brand, unit, importPrice, sellPrice, stock, expirationDate, image } = req.body
+      const { name, categoryName, supplierName, brand, unit, importPrice, sellPrice, stock, expirationDate, image } = req.body
 
-      if (!name || !categoryId || !supplierId || !brand || !unit || !importPrice || !sellPrice || !expirationDate) {
+      if (!name || !categoryName || !supplierName || !brand || !unit || !importPrice || !sellPrice || !expirationDate) {
         return res.status(400).json({ message: 'Missing required fields' })
       }
 
-      console.log({ name, categoryId, supplierId, brand, unit, importPrice, sellPrice, stock, expirationDate, image })
-      const newProduct = new Product({ name, categoryId, supplierId, brand, unit, importPrice, sellPrice, stock, expirationDate, image })
+      const category = await Category.findOne({ name: categoryName });
+      if (!category) return res.status(404).json({ message: 'Category not found' });
+
+      const supplier = await Supplier.findOne({ name: supplierName });
+      if (!supplier) return res.status(404).json({ message: 'Supplier not found' });
+
+      console.log({ name, categoryName, supplierName, brand, unit, importPrice, sellPrice, stock, expirationDate, image })
+      const newProduct = new Product({ name, categoryId : category._id, supplierId : supplier._id, brand, unit, importPrice, sellPrice, stock, expirationDate, image })
       await newProduct.save()
 
       const populatedProduct = await Product.findById(newProduct._id)
@@ -106,10 +114,27 @@ const productController = {
       const { id } = req.query
       if (!id) return res.status(400).json({ message: 'Missing product ID' })
 
-      const updatedProduct = await Product.findByIdAndUpdate(id, req.body, { new: true, runValidators: true })
+      let updateData = { ...req.body }
+
+      // Nếu có categoryName, tìm categoryId
+      if (req.body.categoryName) {
+        const category = await Category.findOne({ name: req.body.categoryName })
+        if (!category) return res.status(404).json({ message: 'Category not found' })
+        updateData.categoryId = category._id
+      }
+
+      // Nếu có supplierName, tìm supplierId
+      if (req.body.supplierName) {
+        const supplier = await Supplier.findOne({ name: req.body.supplierName })
+        if (!supplier) return res.status(404).json({ message: 'Supplier not found' })
+        updateData.supplierId = supplier._id
+      }
+
+      const updatedProduct = await Product.findByIdAndUpdate(id, updateData, { new: true, runValidators: true })
         .populate('categoryId', 'name')
         .populate('supplierId', 'name')
       if (!updatedProduct) return res.status(404).json({ message: 'Product not found' })
+      console.log(updatedProduct)
 
       res.status(200).json({
         productId: updatedProduct.productId,

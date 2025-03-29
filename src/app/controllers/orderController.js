@@ -1,11 +1,33 @@
 const Order = require('../models/orderModel')
+const Category = require('../models/categoryModel')
+const Supplier = require('../models/supplierModel')
 
 const orderController = {
   // Lấy danh sách tất cả hóa đơn
   getAllOrders: async (req, res) => {
     try {
       const Orders = await Order.find()
-      res.status(200).json(Orders)
+        .populate('customerId', 'name')
+        .populate('employeeId', 'name')
+        .populate('items.productId', 'name')
+
+      const formattedOrders = Orders.map(order => ({
+        _id: order._id,
+        orderId: order.orderId,
+        customerName: order.customerId ? order.customerId.name : 'Unknown',
+        employeeName: order.employeeId ? order.employeeId.name : 'Unknown',
+        orderDate: order.orderDate,
+        totalAmount: order.totalAmount,
+        otherPaidAmount: order.otherPaidAmount,
+        paymentMethod: order.paymentMethod,
+        items: order.items.map(item => ({
+          productId: item.productId ? item.productId._id : 'Unknown',
+          name: item.productId ? item.productId.name : 'Unknown',
+          quantity: item.quantity,
+          price: item.price,
+        }))
+      }))
+      res.status(200).json(formattedOrders)
     } catch (error) {
       res.status(500).json({ error: error.message })
     }
@@ -18,9 +40,27 @@ const orderController = {
       if (!id) return res.status(400).json({ message: 'Missing Order ID' })
 
       const order = await Order.findById(id)
+        .populate('customerId', 'name')
+        .populate('employeeId', 'name')
+        .populate('items.productId', 'name')
+
       if (!order) return res.status(404).json({ message: 'Order not found' })
 
-      res.status(200).json(order)
+      res.status(200).json({
+        orderId: order.orderId,
+        customerName: order.customerId? order.customerId.name : 'Unknown',
+        employeeName: order.employeeId? order.employeeId.name : 'Unknown',
+        orderDate: order.orderDate,
+        totalAmount: order.totalAmount,
+        otherPaidAmount: order.otherPaidAmount,
+        paymentMethod: order.paymentMethod,
+        items: order.items.map(item => ({
+          productId: item.productId? item.productId._id : 'Unknown',
+          name: item.productId? item.productId.name : 'Unknown',
+          quantity: item.quantity,
+          price: item.price,
+        }))
+      })
     } catch (error) {
       res.status(500).json({ error: error.message })
     }
@@ -29,22 +69,45 @@ const orderController = {
   // Thêm một hóa đơn mới
   createOrder: async (req, res) => {
     try {
-      const { customerId, employeeId, paymentMethod, items } = req.body
+      const { customerName, employeeName, paymentMethod, items } = req.body
 
-      if (!customerId || !items || items.length === 0) {
+      if (!customerName || !employeeName || items.length === 0) {
         return res.status(400).json({ message: 'Missing required fields' })
       }
-      console.log({ customerId, employeeId, paymentMethod, items })
+
+      const customer = await Customer.findOne({ name: customerName })
+      if (!customer) return res.status(404).json({ message: 'Customer not found' })
+      const customerId = customer._id
+
+      let employeeId = null
+      if (employeeName) {
+        const employee = await Employee.findOne({ name: employeeName })
+        if (!employee) return res.status(404).json({ message: 'Employee not found' })
+        employeeId = employee._id
+      }
+
+      const processedItems = await Promise.all(items.map(async (item) => {
+        const product = await Product.findOne({ name: item.productName })
+        if (!product) throw new Error(`Product not found: ${item.productName}`)
+        return {
+          productId: product._id,
+          quantity: item.quantity,
+          price: item.price
+        }
+      }))
+
+      console.log({ customerName, employeeName, paymentMethod, items: processedItems })
 
       const totalAmount = items.reduce((sum, item) => sum + item.quantity * item.price, 0);
+
 
       const newOrder = new Order({
         customerId,
         employeeId,
         totalAmount,
         paymentMethod,
-        items,
-      })
+        items: processedItems,
+      });
 
       await newOrder.save()
 
@@ -57,15 +120,44 @@ const orderController = {
   // Cập nhật đơn hàng
   updateOrder: async (req, res) => {
     try {
-      const { id } = req.query
-      if (!id) return res.status(400).json({ message: 'Missing Order ID' })
+      const { id } = req.query;
+      if (!id) return res.status(400).json({ message: 'Missing Order ID' });
 
-      const updatedOrder = await Order.findByIdAndUpdate(id, req.body, { new: true, runValidators: true })
-      if (!updatedOrder) return res.status(404).json({ message: 'Order not found' })
+      let updateData = { ...req.body };
 
-      res.status(200).json(updatedOrder)
+      // Nếu có customerName, tìm customerId
+      if (req.body.customerName) {
+        const customer = await Customer.findOne({ name: req.body.customerName });
+        if (!customer) return res.status(404).json({ message: 'Customer not found' });
+        updateData.customerId = customer._id;
+      }
+
+      // Nếu có employeeName, tìm employeeId
+      if (req.body.employeeName) {
+        const employee = await Employee.findOne({ name: req.body.employeeName });
+        if (!employee) return res.status(404).json({ message: 'Employee not found' });
+        updateData.employeeId = employee._id;
+      }
+
+      // Nếu có items, xử lý productId từ productName
+      if (req.body.items) {
+        updateData.items = await Promise.all(req.body.items.map(async (item) => {
+          const product = await Product.findOne({ name: item.productName });
+          if (!product) throw new Error(`Product not found: ${item.productName}`);
+          return {
+            productId: product._id,
+            quantity: item.quantity,
+            price: item.price
+          };
+        }));
+      }
+
+      const updatedOrder = await Order.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
+      if (!updatedOrder) return res.status(404).json({ message: 'Order not found' });
+
+      res.status(200).json(updatedOrder);
     } catch (error) {
-      res.status(400).json({ error: error.message })
+      res.status(400).json({ error: error.message });
     }
   },
 
