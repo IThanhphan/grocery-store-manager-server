@@ -68,10 +68,12 @@ const productController = {
   // Thêm một sản phẩm mới
   addProduct: async (req, res) => {
     try {
-      const { name, categoryName, supplierName, brand, unit, importPrice, sellPrice, stock, expirationDate, image } = req.body
+      console.log('req.body:', req.body);
+      console.log('req.file:', req.file);
+      const { name, categoryName, supplierName, brand, unit, importPrice, sellPrice, stock, expirationDate } = req.body;
 
       if (!name || !categoryName || !supplierName || !brand || !unit || !importPrice || !sellPrice || !expirationDate) {
-        return res.status(400).json({ message: 'Missing required fields' })
+        return res.status(400).json({ message: 'Missing required fields' });
       }
 
       const category = await Category.findOne({ name: categoryName });
@@ -80,13 +82,29 @@ const productController = {
       const supplier = await Supplier.findOne({ name: supplierName });
       if (!supplier) return res.status(404).json({ message: 'Supplier not found' });
 
-      console.log({ name, categoryName, supplierName, brand, unit, importPrice, sellPrice, stock, expirationDate, image })
-      const newProduct = new Product({ name, categoryId : category._id, supplierId : supplier._id, brand, unit, importPrice, sellPrice, stock, expirationDate, image })
-      await newProduct.save()
+      // Lấy đường dẫn ảnh từ multer
+      const image = req.file ? `/uploads/${req.file.filename}` : null;
+
+      console.log({ name, categoryName, supplierName, brand, unit, importPrice, sellPrice, stock, expirationDate, image });
+
+      const newProduct = new Product({
+        name,
+        categoryId: category._id,
+        supplierId: supplier._id,
+        brand,
+        unit,
+        importPrice,
+        sellPrice,
+        stock,
+        expirationDate,
+        image
+      });
+
+      await newProduct.save();
 
       const populatedProduct = await Product.findById(newProduct._id)
         .populate('categoryId', 'name')
-        .populate('supplierId', 'name')
+        .populate('supplierId', 'name');
 
       res.status(201).json({
         productId: populatedProduct.productId,
@@ -102,9 +120,9 @@ const productController = {
         image: populatedProduct.image,
         createdAt: populatedProduct.createdAt,
         updatedAt: populatedProduct.updatedAt
-      })
+      });
     } catch (err) {
-      res.status(500).json({ error: err.message })
+      res.status(500).json({ error: err.message });
     }
   },
 
