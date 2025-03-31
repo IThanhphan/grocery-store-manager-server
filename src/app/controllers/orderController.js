@@ -1,6 +1,7 @@
 const Order = require('../models/orderModel')
-const Category = require('../models/categoryModel')
-const Supplier = require('../models/supplierModel')
+const Product = require('../models/productModel')
+const Customer = require('../models/customerModel')
+const Employee = require('../models/employeeModel')
 
 const orderController = {
   // Lấy danh sách tất cả hóa đơn
