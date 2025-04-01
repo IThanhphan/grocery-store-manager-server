@@ -260,17 +260,42 @@ const productController = {
   // Lấy danh sách sản phẩm theo thương hiệu cụ thể
   getProductsByBrand: async (req, res) => {
     try {
-      const { brand } = req.query
-      if (!brand) return res.status(400).json({ message: 'Missing brand name' })
+      const { brand } = req.query;
+      if (!brand || brand.trim() === "") {
+        return res.status(400).json({ message: "Missing or empty brand name" });
+      }
 
-      const products = await Product.find({ brand: brand })
-      if (products.length === 0) return res.status(404).json({ message: 'No products found for this brand' })
+      const products = await Product.find({ brand })
+        .populate("categoryId", "name")
+        .populate("supplierId", "name");
 
-      res.status(200).json(products)
+      if (products.length === 0) {
+        return res.status(404).json({ message: "No products found for this brand" });
+      }
+
+      const formattedProducts = products.map(product => ({
+        _id: product._id,
+        productId: product.productId,
+        name: product.name,
+        categoryName: product.categoryId?.name || "Unknown",
+        supplierName: product.supplierId?.name || "Unknown",
+        brand: product.brand,
+        unit: product.unit,
+        importPrice: product.importPrice,
+        sellPrice: product.sellPrice,
+        stock: product.stock,
+        expirationDate: product.expirationDate,
+        image: product.image,
+        createdAt: product.createdAt,
+        updatedAt: product.updatedAt
+      }));
+
+      res.status(200).json(formattedProducts);
     } catch (err) {
-      res.status(500).json({ error: err.message })
+      res.status(500).json({ error: err.message });
     }
   },
+
 
   //Lấy danh sách đơn vị tính của sản phẩm
   getAllUnits: async (req, res) => {
@@ -294,6 +319,17 @@ const productController = {
       res.status(200).json(products);
     } catch (err) {
       res.status(500).json({ error: err.message });
+    }
+  },
+
+  // lấy toàn bộ thương hiệu
+  getAllBrands: async (req, res) => {
+    try {
+      const brands = await Product.distinct('brand');
+      const formattedBrands = brands.map(brand => ({ brand }));
+      res.status(200).json(formattedBrands);
+    } catch (error) {
+      res.status(500).json({ message: 'Lỗi server', error: error.message });
     }
   }
 }
