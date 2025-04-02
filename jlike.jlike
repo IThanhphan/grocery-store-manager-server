@@ -1,0 +1,136 @@
+Table AttendanceSalary {
+  _id ObjectId [pk]
+  employeeId ObjectId [ref: > User._id]
+  date DateTime
+  checkIn DateTime
+  checkOut DateTime
+  status String
+  hourlyRate Float
+  bonus Float
+  deductions Float
+  workingHours Float
+  totalSalary Float
+  finalSalary Float
+  attendanceSalaryId String
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+Table User {
+  _id ObjectId [pk]
+  name String
+  username String
+  password String
+  manager Boolean
+  address String
+  phone String
+  email String
+  employeeId String
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+Table Category {
+  _id ObjectId [pk]
+  name String
+  categoryId String
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+Table Product {
+  _id ObjectId [pk]
+  name String
+  categoryId ObjectId [ref: > Category._id]
+  supplierId ObjectId [ref: > Supplier._id]
+  importPrice Float
+  sellPrice Float
+  stock Int
+  expirationDate DateTime
+  productId String
+  brand String
+  unit String
+  image String
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+Table Supplier {
+  _id ObjectId [pk]
+  name String
+  address String
+  phone String
+  email String
+  supplierId String
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+Table Customer {
+  _id ObjectId [pk]
+  name String
+  address String
+  phone String
+  email String
+  customerId String
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+Table Order {
+  _id ObjectId [pk]
+  customerId ObjectId [ref: > Customer._id]
+  employeeId ObjectId [ref: > User._id]
+  totalAmount Float
+  paymentMethod String
+  orderDate DateTime
+  orderId String
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+Table OrderItem {
+  _id ObjectId [pk]
+  productId ObjectId [ref: > Product._id]
+  orderId ObjectId [ref: > Order._id]
+  quantity Int
+  price Float
+}
+
+Table ImportOrder {
+  _id ObjectId [pk]
+  supplierId ObjectId [ref: > Supplier._id]
+  employeeId ObjectId [ref: > User._id]
+  totalAmount Float
+  importDate DateTime
+  stockId String
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+Table ImportOrderItem {
+  _id ObjectId [pk]
+  importOrderId ObjectId [ref: > ImportOrder._id]
+  productId ObjectId [ref: > Product._id]
+  quantity Int
+  importPrice Float
+}
+
+Table StockIn {
+  _id varchar [primary key]
+  supplierId varchar [ref: > Supplier._id]
+  employeeId varchar [ref: > User._id]
+  totalAmount int
+  importDate datetime
+  stockId varchar
+  createdAt datetime
+  updatedAt datetime
+}
+
+Table StockInDetail {
+  _id varchar [primary key]
+  stockInId varchar [ref: > StockIn._id]
+  productId varchar [ref: > Product._id]
+  quantity int
+  importPrice int
+}

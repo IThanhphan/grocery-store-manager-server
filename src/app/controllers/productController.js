@@ -296,27 +296,40 @@ const productController = {
     }
   },
 
-
-  //Lấy danh sách đơn vị tính của sản phẩm
-  getAllUnits: async (req, res) => {
-    try {
-      const units = await Product.distinct('unit');
-      res.status(200).json(units);
-    } catch (err) {
-      res.status(500).json({ error: err.message });
-    }
-  },
-
   // Lọc sản phẩm theo đơn vị tính
   getProductsByUnit: async (req, res) => {
     try {
       const { unit } = req.query;
-      if (!unit) return res.status(400).json({ message: 'Missing unit name' });
+      if (!unit || unit.trim() === "") {
+        return res.status(400).json({ message: "Missing or empty unit name" });
+      }
 
-      const products = await Product.find({ unit: unit });
-      if (products.length === 0) return res.status(404).json({ message: 'No products found for this unit' });
+      const products = await Product.find({ unit })
+        .populate("categoryId", "name")
+        .populate("supplierId", "name");
 
-      res.status(200).json(products);
+      if (products.length === 0) {
+        return res.status(404).json({ message: "No products found for this brand" });
+      }
+
+      const formattedProducts = products.map(product => ({
+        _id: product._id,
+        productId: product.productId,
+        name: product.name,
+        categoryName: product.categoryId?.name || "Unknown",
+        supplierName: product.supplierId?.name || "Unknown",
+        brand: product.brand,
+        unit: product.unit,
+        importPrice: product.importPrice,
+        sellPrice: product.sellPrice,
+        stock: product.stock,
+        expirationDate: product.expirationDate,
+        image: product.image,
+        createdAt: product.createdAt,
+        updatedAt: product.updatedAt
+      }));
+
+      res.status(200).json(formattedProducts);
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
@@ -328,6 +341,17 @@ const productController = {
       const brands = await Product.distinct('brand');
       const formattedBrands = brands.map(brand => ({ brand }));
       res.status(200).json(formattedBrands);
+    } catch (error) {
+      res.status(500).json({ message: 'Lỗi server', error: error.message });
+    }
+  },
+
+  // lấy toàn bộ đơn vị
+  getAllUnits: async (req, res) => {
+    try {
+      const units = await Product.distinct('unit');
+      const formattedUnits = units.map(unit => ({ unit }));
+      res.status(200).json(formattedUnits);
     } catch (error) {
       res.status(500).json({ message: 'Lỗi server', error: error.message });
     }
