@@ -1,23 +1,25 @@
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
-const User = require('../models/usersModel')
+const User = require('../models/userModel')
 
 const authController = {
-  registerUser: async (req, res) => {
+  addNewUser: async (req, res) => {
     try {
       const salt = await bcrypt.genSalt()
       const hashed = await bcrypt.hash(req.body.password, salt)
 
       const newUser = new User({
-        username: req.body.username,
+        name: req.body.name,
         email: req.body.email,
-        phoneNumber: req.body.phoneNumber,
-        password: hashed
+        phone: req.body.phone,
+        password: hashed,
+        dob: req.body.dob,
+        address: req.body.address
       })
 
       const user = await newUser.save()
-      res.status(200).json(user)
-    } catch(err) {
+      res.status(201).json(user)
+    } catch (err) {
       res.status(500).json(err)
     }
   },
@@ -26,7 +28,7 @@ const authController = {
     return jwt.sign({
       id: user.id,
       manager: user.manager
-    }, process.env.JWT_ACCESS_KEY, { expiresIn: '30s' })
+    }, process.env.JWT_ACCESS_KEY, { expiresIn: '5m' })
   },
 
   generateRefreshToken: (user) => {
@@ -38,7 +40,7 @@ const authController = {
 
   loginUser: async (req, res) => {
     try {
-      const user = await User.findOne({ username: req.body.username })
+      const user = await User.findOne({ name: req.body.name })
       if (!user) {
         return res.status(404).json('wrong username')
       }
@@ -58,7 +60,7 @@ const authController = {
       })
       const { password, ...other } = user._doc
       res.status(200).json({ ...other, accessToken })
-    } catch(err) {
+    } catch (err) {
       res.status(500).json(err)
     }
   },
@@ -92,6 +94,72 @@ const authController = {
       sameSite: 'strict'
     })
     res.status(200).json('Logout successfully')
+  },
+
+  getListOfAllUsers: async (req, res) => {
+    try {
+      const Users = await User.find()
+      res.status(200).json(Users)
+    } catch (error) {
+      res.status(500).json({ error: error.message })
+    }
+  },
+
+  // Lấy chi tiết một nhân viên theo ID
+  getDetailsOfUser: async (req, res) => {
+    try {
+      const { id } = req.query
+      if (!id) return res.status(400).json({ message: 'Missing User ID' })
+
+      const user = await User.findById(id)
+      if (!user) return res.status(404).json({ message: 'User not found' })
+
+      res.status(200).json(user)
+    } catch (error) {
+      res.status(500).json({ error: error.message })
+    }
+  },
+
+  // Cập nhật thông tin nhân viên
+  updateUserInformation: async (req, res) => {
+    try {
+      const { id } = req.query
+      if (!id) return res.status(400).json({ message: 'Missing User ID' })
+
+      let updateData = { ...req.body };
+
+      if (req.body.password) {
+        const salt = await bcrypt.genSalt();
+        const hashedPassword = await bcrypt.hash(req.body.password, salt);
+        updateData.password = hashedPassword;
+      }
+
+      const updatedUser = await User.findByIdAndUpdate(id, updateData, {
+        new: true,
+        runValidators: true
+      });
+
+      if (!updatedUser) return res.status(404).json({ message: 'User not found' })
+
+      res.status(200).json(updatedUser)
+    } catch (error) {
+      res.status(400).json({ error: error.message })
+    }
+  },
+
+  // Xóa một nhân viên
+  deleteUser: async (req, res) => {
+    try {
+      const { id } = req.query
+      if (!id) return res.status(400).json({ message: 'Missing User ID' })
+
+      const deletedUser = await User.findByIdAndDelete(id)
+      if (!deletedUser) return res.status(404).json({ message: 'User not found' })
+
+      res.status(200).json({ message: 'User deleted successfully' })
+    } catch (error) {
+      res.status(400).json({ error: error.message })
+    }
   }
 }
 

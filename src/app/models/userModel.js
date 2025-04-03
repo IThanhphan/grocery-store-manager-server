@@ -7,30 +7,32 @@ const userSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
-  username: {
+  name: {
     type: String,
     required: true,
-    minLength: 6,
-    maxLength: 20,
     unique: true
   },
   email: {
     type: String,
     required: true,
-    minLength: 10,
-    maxLength: 50,
     unique: true
   },
-  phoneNumber: {
+  phone: {
     type: String,
     required: true,
-    minLength: 10,
     unique: true
   },
   password: {
     type: String,
     required: true,
-    minlength: 6
+  },
+  dob: {
+    type: Date,
+    required: true
+  },
+  address: {
+    type: String,
+    required: true
   },
   manager: {
     type: Boolean,

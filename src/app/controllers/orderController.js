@@ -1,7 +1,7 @@
 const Order = require('../models/orderModel')
 const Product = require('../models/productModel')
 const Customer = require('../models/customerModel')
-const Employee = require('../models/employeeModel')
+const User = require('../models/userModel')
 
 const orderController = {
   // Lấy danh sách tất cả hóa đơn
@@ -9,14 +9,14 @@ const orderController = {
     try {
       const Orders = await Order.find()
         .populate('customerId', 'name')
-        .populate('employeeId', 'name')
+        .populate('userId', 'name')
         .populate('items.productId', 'name')
 
       const formattedOrders = Orders.map(order => ({
         _id: order._id,
         orderId: order.orderId,
         customerName: order.customerId ? order.customerId.name : 'Unknown',
-        employeeName: order.employeeId ? order.employeeId.name : 'Unknown',
+        userName: order.userId ? order.userId.name : 'Unknown',
         orderDate: order.orderDate,
         totalAmount: order.totalAmount,
         otherPaidAmount: order.otherPaidAmount,
@@ -42,7 +42,7 @@ const orderController = {
 
       const order = await Order.findById(id)
         .populate('customerId', 'name')
-        .populate('employeeId', 'name')
+        .populate('userId', 'name')
         .populate('items.productId', 'name')
 
       if (!order) return res.status(404).json({ message: 'Order not found' })
@@ -50,7 +50,7 @@ const orderController = {
       res.status(200).json({
         orderId: order.orderId,
         customerName: order.customerId? order.customerId.name : 'Unknown',
-        employeeName: order.employeeId? order.employeeId.name : 'Unknown',
+        userName: order.userId? order.userId.name : 'Unknown',
         orderDate: order.orderDate,
         totalAmount: order.totalAmount,
         otherPaidAmount: order.otherPaidAmount,
@@ -70,9 +70,9 @@ const orderController = {
   // Thêm một hóa đơn mới
   createOrder: async (req, res) => {
     try {
-      const { customerName, employeeName, paymentMethod, items } = req.body
+      const { customerName, userName, paymentMethod, items } = req.body
 
-      if (!customerName || !employeeName || items.length === 0) {
+      if (!customerName || !userName || items.length === 0) {
         return res.status(400).json({ message: 'Missing required fields' })
       }
 
@@ -80,11 +80,11 @@ const orderController = {
       if (!customer) return res.status(404).json({ message: 'Customer not found' })
       const customerId = customer._id
 
-      let employeeId = null
-      if (employeeName) {
-        const employee = await Employee.findOne({ name: employeeName })
+      let userId = null
+      if (userName) {
+        const employee = await Employee.findOne({ name: userName })
         if (!employee) return res.status(404).json({ message: 'Employee not found' })
-        employeeId = employee._id
+        userId = employee._id
       }
 
       const processedItems = await Promise.all(items.map(async (item) => {
@@ -97,14 +97,14 @@ const orderController = {
         }
       }))
 
-      console.log({ customerName, employeeName, paymentMethod, items: processedItems })
+      console.log({ customerName, userName, paymentMethod, items: processedItems })
 
       const totalAmount = items.reduce((sum, item) => sum + item.quantity * item.price, 0);
 
 
       const newOrder = new Order({
         customerId,
-        employeeId,
+        userId,
         totalAmount,
         paymentMethod,
         items: processedItems,
@@ -133,11 +133,11 @@ const orderController = {
         updateData.customerId = customer._id;
       }
 
-      // Nếu có employeeName, tìm employeeId
-      if (req.body.employeeName) {
-        const employee = await Employee.findOne({ name: req.body.employeeName });
+      // Nếu có userName, tìm userId
+      if (req.body.userName) {
+        const employee = await Employee.findOne({ name: req.body.userName });
         if (!employee) return res.status(404).json({ message: 'Employee not found' });
-        updateData.employeeId = employee._id;
+        updateData.userId = employee._id;
       }
 
       // Nếu có items, xử lý productId từ productName
@@ -195,10 +195,10 @@ const orderController = {
   // Lấy danh sách đơn hàng theo nhân viên
   getOrdersByEmployee: async (req, res) => {
     try {
-      const { employeeId } = req.query
-      if (!employeeId) return res.status(400).json({ message: 'Missing EmployeeId' })
+      const { userId } = req.query
+      if (!userId) return res.status(400).json({ message: 'Missing userId' })
 
-      const orders = await Order.find({ employeeId })
+      const orders = await Order.find({ userId })
       if (orders.length === 0) return res.status(404).json({ message: 'No orders found' });
 
       res.status(200).json(orders)

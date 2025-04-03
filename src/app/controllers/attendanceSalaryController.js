@@ -1,4 +1,4 @@
-const AttendanceSalary = require('../models/AttendanceSalaryModel')
+const AttendanceSalary = require('../models/attendanceSalaryModel')
 
 const attendanceSalaryController = {
   // Chấm công
