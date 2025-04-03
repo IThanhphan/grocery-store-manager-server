@@ -11,9 +11,9 @@ const orderSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Customer"
   },
-  employeeId: {
+  userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Employee",
+    ref: "User",
   },
   orderDate: {
     type: Date,

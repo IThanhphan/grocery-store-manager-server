@@ -52,4 +52,4 @@ userSchema.pre('validate', async function (next) {
   next()
 })
 
-module.exports = mongoose.model('Users', userSchema)
+module.exports = mongoose.model('User', userSchema)

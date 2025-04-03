@@ -8,7 +8,7 @@ router.post('/create-order', orderController.createOrder)
 router.put('/update-order', orderController.updateOrder)
 router.delete('/delete-order', orderController.deleteOrder)
 router.get('/get-orders-by-customer', orderController.getOrdersByCustomer)
-router.get('/get-orders-by-employee', orderController.getOrdersByEmployee)
+router.get('/get-orders-by-user', orderController.getOrdersByUser)
 router.get('/get-orders-by-date-range', orderController.getOrdersByDateRange)
 router.get('/get-orders-by-payment-method', orderController.getOrdersByPaymentMethod)
 

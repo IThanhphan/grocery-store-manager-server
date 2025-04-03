@@ -4,19 +4,19 @@ const attendanceSalaryController = {
   // Chấm công
   checkIn: async (req, res) => {
     try {
-      const { employeeId, hourlyRate } = req.body
+      const { userId, hourlyRate } = req.body
       const checkInTime = new Date()
 
       const existingAttendance = await AttendanceSalary.findOne({
-        employeeId,
+        userId,
         date: { $gte: new Date().setHours(0, 0, 0, 0), $lt: new Date().setHours(23, 59, 59, 999) }
       })
 
-      if (existingAttendance) return res.status(400).json({ message: 'Employee has already checked in today' })
+      if (existingAttendance) return res.status(400).json({ message: 'User has already checked in today' })
 
       // Tạo bản ghi chấm công
       const newAttendance = new AttendanceSalary({
-        employeeId,
+        userId,
         date: checkInTime,
         checkIn: checkInTime,
         status: 'Present',
@@ -66,7 +66,7 @@ const attendanceSalaryController = {
   // Lấy danh sách chấm công
   getAllAttendanceRecords: async (req, res) => {
     try {
-      const attendanceRecords = await AttendanceSalary.find().populate('employeeId')
+      const attendanceRecords = await AttendanceSalary.find().populate('userId')
       res.status(200).json(attendanceRecords)
     } catch (error) {
       res.status(500).json({ error: error.message })
@@ -77,7 +77,7 @@ const attendanceSalaryController = {
   getAttendanceById: async (req, res) => {
     try {
       const { id } = req.query;
-      const attendance = await AttendanceSalary.findById(id).populate('employeeId')
+      const attendance = await AttendanceSalary.findById(id).populate('userId')
       if (!attendance) return res.status(404).json({ message: 'No attendance records found' })
 
       res.status(200).json(attendance);
@@ -87,12 +87,12 @@ const attendanceSalaryController = {
   },
 
   // Lấy danh sách chấm công theo nhân viên
-  getAttendanceByEmployee: async (req, res) => {
+  getAttendanceByUser: async (req, res) => {
     try {
-      const { employeeId } = req.query
-      if (!employeeId) return res.status(400).json({ message: 'Missing employeeId' })
+      const { userId } = req.query
+      if (!userId) return res.status(400).json({ message: 'Missing userId' })
 
-      const attendanceRecords = await AttendanceSalary.find({ employeeId })
+      const attendanceRecords = await AttendanceSalary.find({ userId })
       if (!attendanceRecords) return res.status(404).json({ message: 'Order not found' })
 
       res.status(200).json(attendanceRecords)
@@ -139,7 +139,7 @@ const attendanceSalaryController = {
   },
 
   // Cập nhật lương theo giờ (hàng loạt theo nhân viên)
-  updateHourlyRateForAllEmployees: async (req, res) => {
+  updateHourlyRateForAllUsers: async (req, res) => {
     try {
       const { hourlyRate, fromDate } = req.body;
       if (!hourlyRate || hourlyRate <= 0) {
@@ -149,7 +149,7 @@ const attendanceSalaryController = {
       const filter = fromDate ? { date: { $gte: new Date(fromDate) } } : {};
       const updatedRecords = await AttendanceSalary.updateMany(filter, { $set: { hourlyRate } });
 
-      res.status(200).json({ message: 'Updated hourly rate for all employees', updatedRecords });
+      res.status(200).json({ message: 'Updated hourly rate for all Users', updatedRecords });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }

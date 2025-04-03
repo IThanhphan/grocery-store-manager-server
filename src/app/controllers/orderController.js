@@ -82,9 +82,9 @@ const orderController = {
 
       let userId = null
       if (userName) {
-        const employee = await Employee.findOne({ name: userName })
-        if (!employee) return res.status(404).json({ message: 'Employee not found' })
-        userId = employee._id
+        const user = await User.findOne({ name: userName })
+        if (!user) return res.status(404).json({ message: 'User not found' })
+        userId = user._id
       }
 
       const processedItems = await Promise.all(items.map(async (item) => {
@@ -135,9 +135,9 @@ const orderController = {
 
       // Nếu có userName, tìm userId
       if (req.body.userName) {
-        const employee = await Employee.findOne({ name: req.body.userName });
-        if (!employee) return res.status(404).json({ message: 'Employee not found' });
-        updateData.userId = employee._id;
+        const user = await User.findOne({ name: req.body.userName });
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        updateData.userId = user._id;
       }
 
       // Nếu có items, xử lý productId từ productName
@@ -193,7 +193,7 @@ const orderController = {
   },
 
   // Lấy danh sách đơn hàng theo nhân viên
-  getOrdersByEmployee: async (req, res) => {
+  getOrdersByUser: async (req, res) => {
     try {
       const { userId } = req.query
       if (!userId) return res.status(400).json({ message: 'Missing userId' })

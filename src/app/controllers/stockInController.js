@@ -29,14 +29,14 @@ const productController = {
   // Thêm một kho mới
   addStockIn : async (req, res) => {
     try {
-      const { supplierId, employeeId, totalAmount, items } = req.body
+      const { supplierId, userId, totalAmount, items } = req.body
 
-      if (!supplierId || !employeeId || !totalAmount || !items.length) {
+      if (!supplierId || !userId || !totalAmount || !items.length) {
         return res.status(400).json({ message: 'Missing required fields' })
       }
 
-      console.log({ supplierId, employeeId, totalAmount, items })
-      const newStockIn  = new StockIn({ supplierId, employeeId, totalAmount, items })
+      console.log({ supplierId, userId, totalAmount, items })
+      const newStockIn  = new StockIn({ supplierId, userId, totalAmount, items })
       await newStockIn .save()
 
       res.status(201).json(newStockIn )

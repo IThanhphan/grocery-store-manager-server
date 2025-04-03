@@ -12,9 +12,9 @@ const stockIntSchema = new mongoose.Schema({
     ref: 'Supplier',
     required: true
   },
-  employeeId: {
+  userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Employee',
+    ref: 'User',
     required: true
   },
   importDate: {
