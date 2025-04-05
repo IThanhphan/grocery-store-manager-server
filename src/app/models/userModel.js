@@ -30,6 +30,16 @@ const userSchema = new mongoose.Schema({
     type: Date,
     required: true
   },
+  gender: {
+    type: String,
+    enum: ['Nam', 'Nữ', 'Khác'],
+    required: true
+  },
+  citizenId: {
+    type: String,
+    required: true,
+    unique: true
+  },
   address: {
     type: String,
     required: true

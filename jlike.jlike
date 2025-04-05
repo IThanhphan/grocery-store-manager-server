@@ -1,6 +1,6 @@
 Table AttendanceSalary {
   _id ObjectId [pk]
-  employeeId ObjectId [ref: > User._id]
+  UserId ObjectId [ref: > User._id]
   date DateTime
   checkIn DateTime
   checkOut DateTime
@@ -61,7 +61,6 @@ Table Supplier {
   address String
   phone String
   email String
-  supplierId String
   createdAt DateTime
   updatedAt DateTime
 }
@@ -72,7 +71,6 @@ Table Customer {
   address String
   phone String
   email String
-  customerId String
   createdAt DateTime
   updatedAt DateTime
 }
@@ -84,7 +82,6 @@ Table Order {
   totalAmount Float
   paymentMethod String
   orderDate DateTime
-  orderId String
   createdAt DateTime
   updatedAt DateTime
 }
@@ -117,20 +114,19 @@ Table ImportOrderItem {
 }
 
 Table StockIn {
-  _id varchar [primary key]
-  supplierId varchar [ref: > Supplier._id]
-  employeeId varchar [ref: > User._id]
+  _id ObjectId [pk]
+  supplierId ObjectId [ref: > Supplier._id]
+  employeeId ObjectId [ref: > User._id]
   totalAmount int
   importDate datetime
-  stockId varchar
   createdAt datetime
   updatedAt datetime
 }
 
 Table StockInDetail {
-  _id varchar [primary key]
-  stockInId varchar [ref: > StockIn._id]
-  productId varchar [ref: > Product._id]
+  _id ObjectId [primary key]
+  stockInId ObjectId [ref: > StockIn._id]
+  productId ObjectId [ref: > Product._id]
   quantity int
   importPrice int
 }

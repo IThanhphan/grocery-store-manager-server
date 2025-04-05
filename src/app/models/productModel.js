@@ -21,12 +21,14 @@ const productSchema = new mongoose.Schema({
     ref: 'Supplier',
     required: true
   },
-  brand: {
-    type: String,
+  brandId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Brand',
     required: true
   },
-  unit: {
-    type: String,
+  unitId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Unit',
     required: true
   },
   importPrice: {

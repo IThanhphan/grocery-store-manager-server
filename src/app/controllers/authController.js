@@ -14,7 +14,9 @@ const authController = {
         phone: req.body.phone,
         password: hashed,
         dob: req.body.dob,
-        address: req.body.address
+        address: req.body.address,
+        gender: req.body.gender,           
+        citizenId: req.body.citizenId
       })
 
       const user = await newUser.save()

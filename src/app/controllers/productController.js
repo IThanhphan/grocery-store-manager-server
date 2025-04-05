@@ -1,6 +1,8 @@
 const Product = require('../models/productModel')
 const Category = require('../models/categoryModel')
 const Supplier = require('../models/supplierModel')
+const Brand = require('../models/brandModel')
+const Unit = require('../models/unitModel')
 
 const productController = {
   // Lấy danh sách tất cả sản phẩm
@@ -9,6 +11,8 @@ const productController = {
       const products = await Product.find()
         .populate('categoryId', 'name')
         .populate('supplierId', 'name')
+        .populate('brandId', 'name')
+        .populate('unitId', 'name')
 
       const formattedProducts = products.map(product => ({
         _id: product._id,
@@ -16,8 +20,8 @@ const productController = {
         name: product.name,
         categoryName: product.categoryId ? product.categoryId.name : 'Unknown',
         supplierName: product.supplierId ? product.supplierId.name : 'Unknown',
-        brand: product.brand,
-        unit: product.unit,
+        brand: product.brandId ? product.brandId.name : 'Unknown',
+        unit: product.unitId ? product.unitId.name : 'Unknown',
         importPrice: product.importPrice,
         sellPrice: product.sellPrice,
         stock: product.stock,
@@ -42,6 +46,8 @@ const productController = {
       const product = await Product.findById(id)
         .populate('categoryId', 'name')
         .populate('supplierId', 'name')
+        .populate('brandId', 'name')
+        .populate('unitId', 'name')
 
       if (!product) return res.status(404).json({ message: 'Product not found' })
 
@@ -50,6 +56,8 @@ const productController = {
         name: product.name,
         categoryName: product.categoryId ? product.categoryId.name : 'Unknown',
         supplierName: product.supplierId ? product.supplierId.name : 'Unknown',
+        brand: product.brandId ? product.brandId.name : 'Unknown',
+        unit: product.unitId ? product.unitId.name : 'Unknown',
         brand: product.brand,
         unit: product.unit,
         importPrice: product.importPrice,
@@ -68,51 +76,59 @@ const productController = {
   // Thêm một sản phẩm mới
   addProduct: async (req, res) => {
     try {
-      console.log('req.body:', req.body);
-      console.log('req.file:', req.file);
-      const { name, categoryName, supplierName, brand, unit, importPrice, sellPrice, stock, expirationDate } = req.body;
+      console.log('req.body:', req.body)
+      console.log('req.file:', req.file)
+      const { name, categoryName, supplierName, brandName, unitName, importPrice, sellPrice, stock, expirationDate } = req.body
 
-      if (!name || !categoryName || !supplierName || !brand || !unit || !importPrice || !sellPrice || !expirationDate) {
-        return res.status(400).json({ message: 'Missing required fields' });
+      if (!name || !categoryName || !supplierName || !brandName || !unitName || !importPrice || !sellPrice || !expirationDate) {
+        return res.status(400).json({ message: 'Missing required fields' })
       }
 
-      const category = await Category.findOne({ name: categoryName });
-      if (!category) return res.status(404).json({ message: 'Category not found' });
+      const category = await Category.findOne({ name: categoryName })
+      if (!category) return res.status(404).json({ message: 'Category not found' })
 
-      const supplier = await Supplier.findOne({ name: supplierName });
-      if (!supplier) return res.status(404).json({ message: 'Supplier not found' });
+      const supplier = await Supplier.findOne({ name: supplierName })
+      if (!supplier) return res.status(404).json({ message: 'Supplier not found' })
+
+      const brand = await Brand.findOne({ name: brandName })
+      if (!brand) return res.status(404).json({ message: 'Brand not found' })
+
+      const unit = await Unit.findOne({ name: unitName })
+      if (!unit) return res.status(404).json({ message: 'Unit not found' })
 
       // Lấy đường dẫn ảnh từ multer
-      const image = req.file ? `/uploads/${req.file.filename}` : null;
+      const image = req.file ? `/uploads/${req.file.filename}` : null
 
-      console.log({ name, categoryName, supplierName, brand, unit, importPrice, sellPrice, stock, expirationDate, image });
+      console.log({ name, categoryName, supplierName, brandName, unitName, importPrice, sellPrice, stock, expirationDate, image })
 
       const newProduct = new Product({
         name,
         categoryId: category._id,
         supplierId: supplier._id,
-        brand,
-        unit,
+        brandId: brand._id,
+        unitId: unit._id,
         importPrice,
         sellPrice,
         stock,
         expirationDate,
         image
-      });
+      })
 
-      await newProduct.save();
+      await newProduct.save()
 
       const populatedProduct = await Product.findById(newProduct._id)
         .populate('categoryId', 'name')
-        .populate('supplierId', 'name');
+        .populate('supplierId', 'name')
+        .populate('brandId', 'name')
+        .populate('unitId', 'name')
 
       res.status(201).json({
         productId: populatedProduct.productId,
         name: populatedProduct.name,
         categoryName: populatedProduct.categoryId ? populatedProduct.categoryId.name : 'Unknown',
         supplierName: populatedProduct.supplierId ? populatedProduct.supplierId.name : 'Unknown',
-        brand: populatedProduct.brand,
-        unit: populatedProduct.unit,
+        brandName: populatedProduct.brandId ? populatedProduct.brandId.name : 'Unknown',
+        unitName: populatedProduct.unitId ? populatedProduct.unitId.name : 'Unknown',
         importPrice: populatedProduct.importPrice,
         sellPrice: populatedProduct.sellPrice,
         stock: populatedProduct.stock,
@@ -120,9 +136,9 @@ const productController = {
         image: populatedProduct.image,
         createdAt: populatedProduct.createdAt,
         updatedAt: populatedProduct.updatedAt
-      });
+      })
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: err.message })
     }
   },
 
@@ -148,9 +164,25 @@ const productController = {
         updateData.supplierId = supplier._id
       }
 
+      // Nếu có brandName, tìm brandId
+      if (req.body.brandName) {
+        const brand = await Brand.findOne({ name: req.body.brandName })
+        if (!brand) return res.status(404).json({ message: 'Supplier not found' })
+        updateData.brandId = brand._id
+      }
+
+      // Nếu có unitName, tìm unitId
+      if (req.body.unitName) {
+        const unit = await Unit.findOne({ name: req.body.unitName })
+        if (!unit) return res.status(404).json({ message: 'Unit not found' })
+        updateData.unitId = unit._id
+      }
+
       const updatedProduct = await Product.findByIdAndUpdate(id, updateData, { new: true, runValidators: true })
         .populate('categoryId', 'name')
         .populate('supplierId', 'name')
+        .populate('brandId', 'name')
+        .populate('unitId', 'name')
       if (!updatedProduct) return res.status(404).json({ message: 'Product not found' })
       console.log(updatedProduct)
 
@@ -159,8 +191,8 @@ const productController = {
         name: updatedProduct.name,
         categoryName: updatedProduct.categoryId ? updatedProduct.categoryId.name : 'Unknown',
         supplierName: updatedProduct.supplierId ? updatedProduct.supplierId.name : 'Unknown',
-        brand: updatedProduct.brand,
-        unit: updatedProduct.unit,
+        brandName: updatedProduct.brandId ? updatedProduct.brandId.name : 'Unknown',
+        unitName: updatedProduct.unitId ? updatedProduct.unitId.name : 'Unknown',
         importPrice: updatedProduct.importPrice,
         sellPrice: updatedProduct.sellPrice,
         stock: updatedProduct.stock,
@@ -195,7 +227,7 @@ const productController = {
       const { categoryId } = req.query
       if (!categoryId) return res.status(400).json({ message: 'Missing categoryId' })
 
-      const products = await Product.find({ category: categoryId })
+      const products = await Product.find({ categoryId })
       if (products.length === 0) return res.status(404).json({ message: 'No products found in this category' })
 
       res.status(200).json(products)
@@ -230,7 +262,7 @@ const productController = {
 
       const today = new Date()
       const deadlineDate = new Date()
-      deadlineDate.setDate(today.getDate() + parseInt(daysLeft));
+      deadlineDate.setDate(today.getDate() + parseInt(daysLeft))
 
       const nearlyExpiredProducts = await Product.find({
         expirationDate: { $gte: today, $lte: deadlineDate }
@@ -260,25 +292,34 @@ const productController = {
   // Lấy danh sách sản phẩm theo thương hiệu cụ thể
   getProductsByBrand: async (req, res) => {
     try {
-      const { brand } = req.query;
+      const { brand } = req.query
       if (!brand || brand.trim() === "") {
-        return res.status(400).json({ message: "Missing or empty brand name" });
+        return res.status(400).json({ message: "Missing or empty brand name" })
       }
 
-      const products = await Product.find({ brand })
-        .populate("categoryId", "name")
-        .populate("supplierId", "name");
+      const brandDoc = await Brand.findOne({ name: brand.trim() })
+      if (!brandDoc) {
+        return res.status(404).json({ message: "Brand not found" })
+      }
+
+      const products = await Product.find({ brandId: brandDoc._id })
+        .populate('categoryId', 'name')
+        .populate('supplierId', 'name')
+        .populate('brandId', 'name')
+        .populate('unitId', 'name')
 
       if (products.length === 0) {
-        return res.status(404).json({ message: "No products found for this brand" });
+        return res.status(404).json({ message: "No products found for this brand" })
       }
 
       const formattedProducts = products.map(product => ({
         _id: product._id,
         productId: product.productId,
         name: product.name,
-        categoryName: product.categoryId?.name || "Unknown",
-        supplierName: product.supplierId?.name || "Unknown",
+        categoryName: product.categoryId ? product.categoryId.name : 'Unknown',
+        supplierName: product.supplierId ? product.supplierId.name : 'Unknown',
+        brandName: product.brandId ? product.brandId.name : 'Unknown',
+        unitName: product.unitId ? product.unitId.name : 'Unknown',
         brand: product.brand,
         unit: product.unit,
         importPrice: product.importPrice,
@@ -288,36 +329,45 @@ const productController = {
         image: product.image,
         createdAt: product.createdAt,
         updatedAt: product.updatedAt
-      }));
+      }))
 
-      res.status(200).json(formattedProducts);
+      res.status(200).json(formattedProducts)
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: err.message })
     }
   },
 
   // Lọc sản phẩm theo đơn vị tính
   getProductsByUnit: async (req, res) => {
     try {
-      const { unit } = req.query;
+      const { unit } = req.query
       if (!unit || unit.trim() === "") {
-        return res.status(400).json({ message: "Missing or empty unit name" });
+        return res.status(400).json({ message: "Missing or empty unit name" })
       }
 
-      const products = await Product.find({ unit })
-        .populate("categoryId", "name")
-        .populate("supplierId", "name");
+      const unitDoc = await Unit.findOne({ name: unit.trim() })
+      if (!unitDoc) {
+        return res.status(404).json({ message: "Unit not found" })
+      }
+
+      const products = await Product.find({ unitId: unitDoc._id })
+        .populate('categoryId', 'name')
+        .populate('supplierId', 'name')
+        .populate('brandId', 'name')
+        .populate('unitId', 'name')
 
       if (products.length === 0) {
-        return res.status(404).json({ message: "No products found for this brand" });
+        return res.status(404).json({ message: "No products found for this brand" })
       }
 
       const formattedProducts = products.map(product => ({
         _id: product._id,
         productId: product.productId,
         name: product.name,
-        categoryName: product.categoryId?.name || "Unknown",
-        supplierName: product.supplierId?.name || "Unknown",
+        categoryName: product.categoryId ? product.categoryId.name : 'Unknown',
+        supplierName: product.supplierId ? product.supplierId.name : 'Unknown',
+        brandName: product.brandId ? product.brandId.name : 'Unknown',
+        unitName: product.unitId ? product.unitId.name : 'Unknown',
         brand: product.brand,
         unit: product.unit,
         importPrice: product.importPrice,
@@ -327,35 +377,13 @@ const productController = {
         image: product.image,
         createdAt: product.createdAt,
         updatedAt: product.updatedAt
-      }));
+      }))
 
-      res.status(200).json(formattedProducts);
+      res.status(200).json(formattedProducts)
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: err.message })
     }
   },
-
-  // lấy toàn bộ thương hiệu
-  getAllBrands: async (req, res) => {
-    try {
-      const brands = await Product.distinct('brand');
-      const formattedBrands = brands.map(brand => ({ brand }));
-      res.status(200).json(formattedBrands);
-    } catch (error) {
-      res.status(500).json({ message: 'Lỗi server', error: error.message });
-    }
-  },
-
-  // lấy toàn bộ đơn vị
-  getAllUnits: async (req, res) => {
-    try {
-      const units = await Product.distinct('unit');
-      const formattedUnits = units.map(unit => ({ unit }));
-      res.status(200).json(formattedUnits);
-    } catch (error) {
-      res.status(500).json({ message: 'Lỗi server', error: error.message });
-    }
-  }
 }
 
 module.exports = productController
