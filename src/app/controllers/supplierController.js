@@ -1,4 +1,5 @@
 const Supplier = require('../models/supplierModel')
+// const StockInt = require('../models/stockIntModel')
 
 const supplierController = {
   // Lấy danh sách tất cả nhà cung cấp
@@ -29,11 +30,11 @@ const supplierController = {
   // Thêm một nhà cung cấp mới
   addNewSupplier: async (req, res) => {
     try {
-      const { name, address, phone, email } = req.body
+      const { name, address, phone, email, company, note } = req.body
 
       if (!name || !address || !phone || !email) return res.status(400).json({ message: 'Missing required fields' })
-      console.log({ name, address, phone, email })
-      const newSupplier = new Supplier({ name, address, phone, email })
+      console.log({ name, address, phone, email, company, note })
+      const newSupplier = new Supplier({ name, address, phone, email, company, note })
       await newSupplier.save()
 
       res.status(201).json(newSupplier)
@@ -69,6 +70,35 @@ const supplierController = {
       res.status(200).json({ message: 'Supplier deleted successfully' })
     } catch (error) {
       res.status(400).json({ error: error.message })
+    }
+  },
+
+  // Tính tổng bán của nhà cung cấp (tổng giá trị nhập hàng từ nhà cung cấp đó)
+  getTotalImportBySupplier: async (req, res) => {
+    try {
+      const { id } = req.query
+      if (!id) return res.status(400).json({ message: 'Missing supplier ID' })
+
+      // Tính tổng `totalAmount` của tất cả các StockInt có supplierId này
+      const result = await StockInt.aggregate([
+        {
+          $match: {
+            supplierId: new mongoose.Types.ObjectId(id)
+          }
+        },
+        {
+          $group: {
+            _id: '$supplierId',
+            totalImportAmount: { $sum: '$totalAmount' }
+          }
+        }
+      ])
+
+      const total = result.length > 0 ? result[0].totalImportAmount : 0
+
+      res.status(200).json({ supplierId: id, totalImportAmount: total })
+    } catch (error) {
+      res.status(500).json({ error: error.message })
     }
   }
 }

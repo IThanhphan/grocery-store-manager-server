@@ -11,6 +11,23 @@ const customerSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  gender: {
+    type: Boolean,
+    required: true
+  },
+  customerType: {
+    type: Boolean,
+    required: true
+  },
+  identityNumber: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  company: {
+    type: String, // Tên công ty (nếu có)
+    default: ''
+  },
   address: {
     type: String,
     required: true
@@ -24,6 +41,10 @@ const customerSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true
+  },
+  note: {
+    type: String,
+    default: ''
   }
 }, { timestamps: true })
 

@@ -1,4 +1,5 @@
 const Customer = require('../models/customerModel')
+const Order = require('../models/orderModel')
 
 const CustomerController = {
   // Lấy danh sách tất cả khách hàng
@@ -29,13 +30,44 @@ const CustomerController = {
   // Thêm một khách hàng mới
   addNewCustomer: async (req, res) => {
     try {
-      const { name, address, phone, email } = req.body
+      const {
+        name,
+        gender,
+        customerType,
+        identityNumber,
+        company,
+        address,
+        phone,
+        email,
+        note
+      } = req.body
 
-      if (!name || !address || !phone || !email) return res.status(400).json({ message: 'Missing required fields' })
-      console.log({ name, address, phone, email })
-      const newCustomer = new Customer({ name, address, phone, email })
+      if (!name || gender === undefined || customerType === undefined || !identityNumber || !address || !phone || !email)
+        return res.status(400).json({ message: 'Missing required fields' })
+      console.log({
+        name,
+        gender,
+        customerType,
+        identityNumber,
+        company,
+        address,
+        phone,
+        email,
+        note
+      })
+      const newCustomer = new Customer({
+        name,
+        gender,
+        customerType,
+        identityNumber,
+        company,
+        address,
+        phone,
+        email,
+        note
+      })
+
       await newCustomer.save()
-
       res.status(201).json(newCustomer)
     } catch (error) {
       res.status(400).json({ error: error.message })
@@ -69,6 +101,37 @@ const CustomerController = {
       res.status(200).json({ message: 'Customer deleted successfully' })
     } catch (error) {
       res.status(400).json({ error: error.message })
+    }
+  },
+
+  // Tính tổng bán của một khách hàng theo customerId
+  getTotalSalesByCustomer: async (req, res) => {
+    try {
+      const { id } = req.query
+      if (!id) return res.status(400).json({ message: 'Missing Customer ID' })
+
+      const customer = await Customer.findById(id)
+      if (!customer) return res.status(404).json({ message: 'Customer not found' })
+
+      const result = await Order.aggregate([
+        { $match: { customerId: customer._id } },
+        {
+          $group: {
+            _id: '$id',
+            totalSales: { $sum: '$totalAmount' }
+          }
+        }
+      ])
+
+      const totalSales = result.length > 0 ? result[0].totalSales : 0
+
+      res.status(200).json({
+        customerId: customer._id,
+        customerName: customer.name,
+        totalSales
+      })
+    } catch (error) {
+      res.status(500).json({ error: error.message })
     }
   }
 }

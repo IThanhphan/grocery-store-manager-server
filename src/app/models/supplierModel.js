@@ -25,6 +25,14 @@ const supplierSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  company: {
+    type: String, // Tên công ty (nếu có)
+    default: ''
+  },
+  note: {
+    type: String,
+    default: ''
+  }
 }, { timestamps: true })
 
 supplierSchema.pre('validate', async function (next) {

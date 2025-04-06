@@ -7,5 +7,6 @@ router.get('/get-details-of-a-customer', customerController.getDetailsOfCustomer
 router.post('/add-a-new-customer', customerController.addNewCustomer)
 router.put('/update-customer-information', customerController.updateCustomerInformation)
 router.delete('/delete-a-customer', customerController.deleteCustomer)
+router.get('/get-total-sales-by-customer', customerController.getTotalSalesByCustomer)
 
 module.exports = router

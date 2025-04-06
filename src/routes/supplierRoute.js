@@ -7,5 +7,6 @@ router.get('/get-details-of-a-supplier', supplierController.getDetailsOfSupplier
 router.post('/add-a-new-supplier', supplierController.addNewSupplier)
 router.put('/update-supplier-information', supplierController.updateSupplierInformation)
 router.delete('/delete-a-supplier', supplierController.deleteSupplier)
+router.get('/get-total-import-by-supplier', supplierController.getTotalImportBySupplier)
 
 module.exports = router
