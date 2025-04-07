@@ -15,11 +15,11 @@ const customerSchema = new mongoose.Schema({
     type: Boolean,
     required: true
   },
-  customerType: {
+  customerType: { // lOẠI KHÁCH HÀNG
     type: Boolean,
     required: true
   },
-  identityNumber: {
+  identityNumber: { // CCCD
     type: String,
     required: true,
     unique: true
@@ -36,6 +36,10 @@ const customerSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true
+  },
+  dob: {
+    type: Date,
+    required: true
   },
   email: {
     type: String,

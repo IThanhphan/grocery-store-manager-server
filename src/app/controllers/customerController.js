@@ -36,19 +36,21 @@ const CustomerController = {
         customerType,
         identityNumber,
         company,
+        dob,
         address,
         phone,
         email,
         note
       } = req.body
 
-      if (!name || gender === undefined || customerType === undefined || !identityNumber || !address || !phone || !email)
+      if (!name || gender === undefined || customerType === undefined || !identityNumber || !dob || !address || !phone || !email)
         return res.status(400).json({ message: 'Missing required fields' })
       console.log({
         name,
         gender,
         customerType,
         identityNumber,
+        dob,
         company,
         address,
         phone,
@@ -61,6 +63,7 @@ const CustomerController = {
         customerType,
         identityNumber,
         company,
+        dob,
         address,
         phone,
         email,
