@@ -47,6 +47,15 @@ const userSchema = new mongoose.Schema({
   manager: {
     type: Boolean,
     default: false
+  },
+  hourlyRate: { // mức lương theo giờ
+    type: Number,
+    required: true,
+    min: 0
+  },
+  note: {
+    type: String,
+    default: ''
   }
 }, { timestamps: true })
 

@@ -4,12 +4,15 @@ const attendanceSalaryController = {
   // Chấm công
   checkIn: async (req, res) => {
     try {
-      const { userId, hourlyRate } = req.body
+      const { userId } = req.body
       const checkInTime = new Date()
 
       const existingAttendance = await AttendanceSalary.findOne({
         userId,
-        date: { $gte: new Date().setHours(0, 0, 0, 0), $lt: new Date().setHours(23, 59, 59, 999) }
+        date: { 
+          $gte: new Date().setHours(0, 0, 0, 0), 
+          $lt: new Date().setHours(23, 59, 59, 999) 
+        }
       })
 
       if (existingAttendance) return res.status(400).json({ message: 'User has already checked in today' })
@@ -20,7 +23,6 @@ const attendanceSalaryController = {
         date: checkInTime,
         checkIn: checkInTime,
         status: 'Present',
-        hourlyRate,
         bonus: 0,
         deductions: 0
       })
@@ -37,17 +39,21 @@ const attendanceSalaryController = {
     try {
       const { id } = req.query
       const checkOutTime = new Date()
+
       const attendance = await AttendanceSalary.findById(id)
       if (!attendance) return res.status(400).json({ message: 'Missing attendance ID' })
-
       if (attendance.checkOut) return res.status(400).json({ message: 'Checked out before' })
-
       if (checkOutTime <= attendance.checkIn) {
         return res.status(400).json({ message: 'Check-out time must be after check-in time' });
       }
 
+      const user = await User.findById(attendance.userId);
+      if (!user || !user.hourlyRate) {
+        return res.status(400).json({ message: 'User salary not found' });
+      }
+
       const workingHours = Math.abs(checkOutTime - attendance.checkIn) / 36e5;
-      const totalSalary = workingHours * attendance.hourlyRate;
+      const totalSalary = workingHours * user.hourlyRate;
       const finalSalary = totalSalary + attendance.bonus - attendance.deductions;
 
       attendance.checkOut = checkOutTime;
@@ -116,42 +122,6 @@ const attendanceSalaryController = {
       res.status(200).json({ message: 'Cập nhật trạng thái thành công', attendance })
     } catch (err) {
       res.status(500).json({ error: err.message })
-    }
-  },
-
-  // Cập nhật lương theo giờ (cho một bản ghi)
-  updateHourlyRate: async (req, res) => {
-    try {
-      const { id } = req.query
-      const { hourlyRate } = req.body
-      if (!id) return res.status(400).json({ message: 'Missing id' })
-      if (hourlyRate <= 0) return res.status(400).json({ message: 'Hourly Rate must be greater than 0' })
-
-      const attendance = await AttendanceSalary.findById(id)
-      if (!attendance) return res.status(404).json({ message: 'No attendance found' });
-
-      attendance.hourlyRate = hourlyRate
-      await attendance.save()
-      res.status(200).json(attendance)
-    } catch (err) {
-      res.status(500).json({ error: err.message })
-    }
-  },
-
-  // Cập nhật lương theo giờ (hàng loạt theo nhân viên)
-  updateHourlyRateForAllUsers: async (req, res) => {
-    try {
-      const { hourlyRate, fromDate } = req.body;
-      if (!hourlyRate || hourlyRate <= 0) {
-        return res.status(400).json({ message: 'Hourly Rate must be greater than 0' });
-      }
-
-      const filter = fromDate ? { date: { $gte: new Date(fromDate) } } : {};
-      const updatedRecords = await AttendanceSalary.updateMany(filter, { $set: { hourlyRate } });
-
-      res.status(200).json({ message: 'Updated hourly rate for all Users', updatedRecords });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
     }
   },
 

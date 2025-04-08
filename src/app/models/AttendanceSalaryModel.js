@@ -1,5 +1,6 @@
 const mongoose = require('mongoose')
 const Counter = require('./counterModel')
+const User = require('./userModel')
 
 const attendanceSalarySchema = new mongoose.Schema({
   attendanceSalaryId:{
@@ -26,10 +27,6 @@ const attendanceSalarySchema = new mongoose.Schema({
   status: { 
     type: String, 
     enum: ["Present", "Absent", "Late", "Left Early"], 
-    required: true 
-  },
-  hourlyRate: { 
-    type: Number, 
     required: true 
   },
   bonus: { 

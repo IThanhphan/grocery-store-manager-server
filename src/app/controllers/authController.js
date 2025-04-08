@@ -15,8 +15,10 @@ const authController = {
         password: hashed,
         dob: req.body.dob,
         address: req.body.address,
-        gender: req.body.gender,           
-        citizenId: req.body.citizenId
+        gender: req.body.gender,
+        citizenId: req.body.citizenId,
+        hourlyRate: req.body.hourlyRate,
+        note: req.body.note
       })
 
       const user = await newUser.save()
@@ -161,6 +163,45 @@ const authController = {
       res.status(200).json({ message: 'User deleted successfully' })
     } catch (error) {
       res.status(400).json({ error: error.message })
+    }
+  },
+
+  //Cập nhật lương theo giờ (cho một nhân viên)
+  updateHourlyRate: async (req, res) => {
+    try {
+      const { id } = req.query
+      const { hourlyRate } = req.body
+
+      if (!id) return res.status(400).json({ message: 'Missing User ID' })
+      if (!hourlyRate || hourlyRate <= 0) {
+        return res.status(400).json({ message: 'Hourly Rate must be greater than 0' })
+      }
+
+      const user = await User.findById(id)
+      if (!user) return res.status(404).json({ message: 'User not found' })
+
+      user.hourlyRate = hourlyRate
+      await user.save()
+
+      res.status(200).json({ message: 'Hourly rate updated successfully', user })
+    } catch (err) {
+      res.status(500).json({ error: err.message })
+    }
+  },
+
+  //Cập nhật lương theo giờ (hàng loạt toàn bộ nhân viên)
+  updateHourlyRateForAllUsers: async (req, res) => {
+    try {
+      const { hourlyRate } = req.body
+
+      if (!hourlyRate || hourlyRate <= 0) {
+        return res.status(400).json({ message: 'Hourly Rate must be greater than 0' })
+      }
+
+      const updated = await User.updateMany({}, { $set: { hourlyRate } })
+      res.status(200).json({ message: 'Hourly rate updated for all users', updated })
+    } catch (err) {
+      res.status(500).json({ error: err.message })
     }
   }
 }

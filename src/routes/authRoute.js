@@ -10,6 +10,8 @@ router.post('/logout', authMiddleware.verifyToken, authController.logoutUser)
 router.get('/get-a-list-of-all-users', authController.getListOfAllUsers)
 router.get('/get-details-of-a-user', authController.getDetailsOfUser)
 router.put('/update-user-information', authController.updateUserInformation)
+router.put('/update-hourly-rate', authController.updateHourlyRate)
+router.put('/update-hourly-rate-for-all-users', authController.updateHourlyRateForAllUsers)
 router.delete('/delete-a-user', authController.deleteUser)
 
 module.exports = router
