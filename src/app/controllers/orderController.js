@@ -25,7 +25,7 @@ const orderController = {
           productId: item.productId ? item.productId._id : 'Unknown',
           name: item.productId ? item.productId.name : 'Unknown',
           quantity: item.quantity,
-          price: item.price,
+          sellPrice: item.sellPrice,
         }))
       }))
       res.status(200).json(formattedOrders)
@@ -49,17 +49,17 @@ const orderController = {
 
       res.status(200).json({
         orderId: order.orderId,
-        customerName: order.customerId? order.customerId.name : 'Unknown',
-        userName: order.userId? order.userId.name : 'Unknown',
+        customerName: order.customerId ? order.customerId.name : 'Unknown',
+        userName: order.userId ? order.userId.name : 'Unknown',
         orderDate: order.orderDate,
         totalAmount: order.totalAmount,
         otherPaidAmount: order.otherPaidAmount,
         paymentMethod: order.paymentMethod,
         items: order.items.map(item => ({
-          productId: item.productId? item.productId._id : 'Unknown',
-          name: item.productId? item.productId.name : 'Unknown',
+          productId: item.productId ? item.productId._id : 'Unknown',
+          name: item.productId ? item.productId.name : 'Unknown',
           quantity: item.quantity,
-          price: item.price,
+          sellPrice: item.sellPrice,
         }))
       })
     } catch (error) {
@@ -87,20 +87,29 @@ const orderController = {
         userId = user._id
       }
 
+      let totalAmount = 0
+
       const processedItems = await Promise.all(items.map(async (item) => {
         const product = await Product.findOne({ name: item.productName })
         if (!product) throw new Error(`Product not found: ${item.productName}`)
+
+        product.stock -= stock;
+        await product.save();
+
+        const quantity = item.quantity
+        const unitPrice = product.sellPrice
+        const totalPrice = unitPrice * quantity
+
+        totalAmount += totalPrice
+
         return {
           productId: product._id,
-          quantity: item.quantity,
-          price: item.price
+          quantity,
+          sellPrice: totalPrice
         }
       }))
 
       console.log({ customerName, userName, paymentMethod, items: processedItems })
-
-      const totalAmount = items.reduce((sum, item) => sum + item.quantity * item.price, 0);
-
 
       const newOrder = new Order({
         customerId,
@@ -148,7 +157,7 @@ const orderController = {
           return {
             productId: product._id,
             quantity: item.quantity,
-            price: item.price
+            sellPrice: item.sellPrice
           };
         }));
       }

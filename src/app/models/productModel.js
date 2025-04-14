@@ -31,23 +31,6 @@ const productSchema = new mongoose.Schema({
     ref: 'Unit',
     required: true
   },
-  importPrice: {
-    type: Number,
-    required: true
-  },
-  sellPrice: {
-    type: Number,
-    required: true
-  },
-  stock: {
-    type: Number,
-    required: true,
-    default: 0
-  },
-  expirationDate: {
-    type: Date,
-    required: true
-  },
   image: {
     type: String,
     required: false

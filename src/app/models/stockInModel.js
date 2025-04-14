@@ -2,7 +2,7 @@ const mongoose = require('mongoose')
 const Counter = require('./counterModel')
 
 const stockIntSchema = new mongoose.Schema({
-  stockId: {
+  stockIntId: {
     type: String,
     required: true,
     unique: true
@@ -38,6 +38,13 @@ const stockIntSchema = new mongoose.Schema({
     importPrice: {
       type: Number,
       required: true
+    },
+    sellPrice: {
+      type: Number
+    },
+    expirationDate: {
+      type: Date,
+      required: true
     }
   }]
 }, { timestamps: true })
@@ -49,9 +56,12 @@ stockIntSchema.pre('validate', async function (next) {
       { $inc: { seq: 1 } },
       { new: true, upsert: true }
     )
-    this.stockId = `NH-${counter.seq.toString().padStart(5, '0')}`
+    this.stockIntId = `NH-${counter.seq.toString().padStart(5, '0')}`
   }
   next()
 })
 
-module.exports = mongoose.model('StockInt', stockIntSchema)
+
+const { createProductBatches } = require('./stockIntMiddleware')
+stockIntSchema.post('save', createProductBatches)
+module.exports = mongoose.model('StockInt', stockIntSchema)  

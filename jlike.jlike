@@ -1,21 +1,3 @@
-Table AttendanceSalary {
-  _id ObjectId [pk]
-  UserId ObjectId [ref: > User._id]
-  date DateTime
-  checkIn DateTime
-  checkOut DateTime
-  status String
-  hourlyRate Float
-  bonus Float
-  deductions Float
-  workingHours Float
-  totalSalary Float
-  finalSalary Float
-  attendanceSalaryId String
-  createdAt DateTime
-  updatedAt DateTime
-}
-
 Table User {
   _id ObjectId [pk]
   name String
@@ -26,31 +8,6 @@ Table User {
   phone String
   email String
   employeeId String
-  createdAt DateTime
-  updatedAt DateTime
-}
-
-Table Category {
-  _id ObjectId [pk]
-  name String
-  categoryId String
-  createdAt DateTime
-  updatedAt DateTime
-}
-
-Table Product {
-  _id ObjectId [pk]
-  name String
-  categoryId ObjectId [ref: > Category._id]
-  supplierId ObjectId [ref: > Supplier._id]
-  importPrice Float
-  sellPrice Float
-  stock Int
-  expirationDate DateTime
-  productId String
-  brand String
-  unit String
-  image String
   createdAt DateTime
   updatedAt DateTime
 }
@@ -75,6 +32,71 @@ Table Customer {
   updatedAt DateTime
 }
 
+Table Category {
+  _id ObjectId [pk]
+  name String
+  categoryId String
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+Table Unit {
+  _id ObjectId [pk]
+  name String
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+Table Brand {
+  _id ObjectId [pk]
+  name String
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+Table Product {
+  _id ObjectId [pk]
+  name String
+  categoryId ObjectId [ref: > Category._id]
+  supplierId ObjectId [ref: > Supplier._id]
+  brandId ObjectId [ref: > Brand._id]
+  unitId ObjectId [ref: > Unit._id]
+  image String
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+Table StockInt {
+  _id ObjectId [pk]
+  supplierId ObjectId [ref: > Supplier._id]
+  userId ObjectId [ref: > User._id]
+  totalAmount int
+  importDate datetime
+  createdAt datetime
+  updatedAt datetime
+}
+
+Table StockIntItem {
+  _id ObjectId [primary key]
+  stockIntId ObjectId [ref: > StockInt._id]
+  productId ObjectId [ref: > Product._id]
+  quantity Int
+  importPrice Float
+  expirationDate DateTime
+}
+
+Table ProductBatch {
+  _id ObjectId [pk]
+  productId ObjectId [ref: > Product._id]
+  stockIntItemId ObjectId [ref: > StockIntItem._id]
+  quantity Int
+  importPrice Float
+  sellPrice Float
+  expirationDate DateTime
+  createdAt DateTime
+  updatedAt DateTime
+}
+
 Table Order {
   _id ObjectId [pk]
   customerId ObjectId [ref: > Customer._id]
@@ -88,45 +110,27 @@ Table Order {
 
 Table OrderItem {
   _id ObjectId [pk]
-  productId ObjectId [ref: > Product._id]
   orderId ObjectId [ref: > Order._id]
+  productId ObjectId [ref: > Product._id]
+  productBatchId ObjectId [ref: > ProductBatch._id]
   quantity Int
-  price Float
+  sellPrice Float
 }
 
-Table ImportOrder {
+Table AttendanceSalary {
   _id ObjectId [pk]
-  supplierId ObjectId [ref: > Supplier._id]
-  employeeId ObjectId [ref: > User._id]
-  totalAmount Float
-  importDate DateTime
-  stockId String
+  userId ObjectId [ref: > User._id]
+  date DateTime
+  checkIn DateTime
+  checkOut DateTime
+  status String
+  hourlyRate Float
+  bonus Float
+  deductions Float
+  workingHours Float
+  totalSalary Float
+  finalSalary Float
+  attendanceSalaryId String
   createdAt DateTime
   updatedAt DateTime
-}
-
-Table ImportOrderItem {
-  _id ObjectId [pk]
-  importOrderId ObjectId [ref: > ImportOrder._id]
-  productId ObjectId [ref: > Product._id]
-  quantity Int
-  importPrice Float
-}
-
-Table StockIn {
-  _id ObjectId [pk]
-  supplierId ObjectId [ref: > Supplier._id]
-  employeeId ObjectId [ref: > User._id]
-  totalAmount int
-  importDate datetime
-  createdAt datetime
-  updatedAt datetime
-}
-
-Table StockInDetail {
-  _id ObjectId [primary key]
-  stockInId ObjectId [ref: > StockIn._id]
-  productId ObjectId [ref: > Product._id]
-  quantity int
-  importPrice int
 }
