@@ -1,5 +1,6 @@
 const mongoose = require('mongoose')
 const Counter = require('./counterModel')
+const { createProductBatches } = require('../middlewares/stockIntMiddleware')
 
 const stockIntSchema = new mongoose.Schema({
   stockIntId: {
@@ -62,6 +63,5 @@ stockIntSchema.pre('validate', async function (next) {
 })
 
 
-const { createProductBatches } = require('../middlewares/stockIntMiddleware')
 stockIntSchema.post('save', createProductBatches)
 module.exports = mongoose.model('StockInt', stockIntSchema)  

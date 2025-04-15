@@ -1,73 +1,196 @@
-const StockIn = require('../models/stockInModel')
+const StockInt = require('../models/stockIntModel')
+const Supplier = require('../models/supplierModel')
+const User = require('../models/userModel')
+const Product = require('../models/productModel')
 
 const productController = {
   // Lấy danh sách tất cả kho
-  getStockIns: async (req, res) => {
+  getAllStockInts: async (req, res) => {
     try {
-      const stockIns = await StockIn.find()
-      res.status(200).json(stockIns)
+      const stockInts = await StockInt.find()
+        .populate('supplierId', 'name')
+        .populate('userId', 'name')
+        .populate('items.productId', 'name')
+
+      const formattedStockInts = stockInts.map(stockInt => ({
+        _id: stockInt._id,
+        stockIntId: stockInt.stockIntId,
+        name: stockInt.name,
+        supplierName: stockInt.supplierId ? stockInt.supplierId.name : 'Unknown',
+        userName: stockInt.userId ? stockInt.userId.name : 'Unknown',
+        importDate: stockInt.importDate,
+        totalAmount: stockInt.totalAmount,
+        items: stockInt.items.map(item => ({
+          productName: item.productId ? item.productId.name : 'Unknown',
+          quantity: item.quantity,
+          importPrice: item.importPrice,
+          sellPrice: item.sellPrice,
+          expirationDate: item.expirationDate
+        })),
+        createdAt: stockInt.createdAt,
+        updatedAt: stockInt.updatedAt
+      }))
+
+      res.status(200).json(formattedStockInts)
     } catch (err) {
       res.status(500).json({ error: err.message })
     }
   },
 
   // Lấy thông tin chi tiết kho theo ID
-  getStockInById: async (req, res) => {
+  getStockIntById: async (req, res) => {
     try {
       const { id } = req.query
-      if (!id) return res.status(404).json({ message: 'Missing stockIn ID' })
+      if (!id) return res.status(400).json({ message: 'Missing stockInt ID' })
 
-      const stockIn = await StockIn.findById(id)
-      if (!stockIn) return res.status(404).json({ message: 'StockIn not found' })
+      const stockInt = await StockInt.findById(id)
+        .populate('supplierId', 'name')
+        .populate('userId', 'name')
+        .populate('items.productId', 'name')
 
-      res.status(200).json(stockIn)
-    } catch (err) {
-      res.status(500).json({ error: err.message })
+      if (!stockInt) return res.status(404).json({ message: 'stockInt not found' })
+
+      res.status(200).json({
+        stockIntId: stockInt.stockIntId,
+        supplierName: stockInt.supplierId ? stockInt.supplierId.name : 'Unknown',
+        userName: stockInt.userId ? stockInt.userId.name : 'Unknown',
+        importDate: stockInt.importDate,
+        totalAmount: stockInt.totalAmount,
+        items: stockInt.items.map(item => ({
+          productName: item.productId ? item.productId.name : 'Unknown',
+          quantity: item.quantity,
+          importPrice: item.importPrice,
+          sellPrice: item.sellPrice,
+          expirationDate: item.expirationDate
+        })),
+      })
+    } catch (error) {
+      res.status(500).json({ error: error.message })
     }
   },
 
   // Thêm một kho mới
-  addStockIn : async (req, res) => {
+  createStockInt: async (req, res) => {
     try {
-      const { supplierId, userId, totalAmount, items } = req.body
+      const { supplierName, userName, items } = req.body
 
-      if (!supplierId || !userId || !totalAmount || !items.length) {
+      if (!supplierName || !userName || items.length === 0) {
         return res.status(400).json({ message: 'Missing required fields' })
       }
 
-      console.log({ supplierId, userId, totalAmount, items })
-      const newStockIn  = new StockIn({ supplierId, userId, totalAmount, items })
-      await newStockIn .save()
+      const supplier = await Supplier.findOne({ name: supplierName })
+      if (!supplier) return res.status(404).json({ message: 'Supplier not found' })
+      const supplierId = supplier._id
 
-      res.status(201).json(newStockIn )
-    } catch (err) {
-      res.status(500).json({ error: err.message })
+      const user = await User.findOne({ name: userName })
+      if (!user) return res.status(404).json({ message: 'User not found' })
+      userId = user._id
+
+      let totalAmount = 0
+
+      const processedItems = await Promise.all(items.map(async (item) => {
+        const product = await Product.findOne({ name: item.productName })
+        if (!product) throw new Error(`Product not found: ${item.productName}`)
+
+        const { quantity, importPrice, sellPrice, expirationDate } = item
+
+        if (!quantity || !importPrice || !expirationDate) {
+          throw new Error(`Missing fields for product: ${item.productName}`)
+        }
+
+        const totalPrice = quantity * importPrice
+        totalAmount += totalPrice
+
+        return {
+          productId: product._id,
+          quantity,
+          importPrice,
+          sellPrice,
+          expirationDate
+        }
+      }))
+
+      console.log({ supplierName, userName, items: processedItems })
+
+      const newStockInt = new StockInt({
+        supplierId: supplier._id,
+        userId: user._id,
+        totalAmount,
+        items: processedItems
+      })
+
+      await newStockInt.save()
+
+      res.status(201).json(newStockInt)
+    } catch (error) {
+      res.status(400).json({ error: error.message })
     }
   },
 
   // Cập nhật kho theo ID
-  updateStockIn: async (req, res) => {
+  updateStockInt: async (req, res) => {
     try {
       const { id } = req.query
-      if (!id) return res.status(400).json({ message: 'Missing StockIn ID' })
+      const { supplierName, userName, items } = req.body
 
-      const updateStockIn = await StockIn.findByIdAndUpdate(id, req.body, { new: true, runValidators: true })
-      if (!updateStockIn) return res.status(404).json({ message: 'StockIn not found' })
+      if (!id || !supplierName || !userName || !items || !items.length) {
+        return res.status(400).json({ message: 'Missing required fields' })
+      }
 
-      res.status(200).json(updateStockIn)
+      const stockInt = await StockInt.findById(id)
+      if (!stockInt) return res.status(404).json({ message: 'StockIn not found' })
+
+      const supplier = await Supplier.findOne({ name: supplierName })
+      if (!supplier) return res.status(404).json({ message: 'Supplier not found' })
+
+      const user = await User.findOne({ name: userName })
+      if (!user) return res.status(404).json({ message: 'User not found' })
+
+      let totalAmount = 0
+      const updatedItems = await Promise.all(items.map(async item => {
+        const product = await Product.findOne({ name: item.productName })
+        if (!product) throw new Error(`Product not found: ${item.productName}`)
+
+        const { quantity, importPrice, sellPrice, expirationDate } = item
+        const totalPrice = quantity * importPrice
+        totalAmount += totalPrice
+
+        return {
+          productId: product._id,
+          quantity,
+          importPrice,
+          sellPrice,
+          expirationDate
+        }
+      }))
+
+      await ProductBatch.deleteMany({ stockIntId: stockInt._id })
+
+      stockInt.supplierId = supplier._id
+      stockInt.userId = user._id
+      stockInt.totalAmount = totalAmount
+      stockInt.items = updatedItems
+
+      await stockInt.save()
+
+      res.status(200).json(stockInt)
     } catch (err) {
       res.status(500).json({ error: err.message })
     }
   },
 
   // Xóa kho theo ID
-  deleteStockIn: async (req, res) => {
+  deleteStockInt: async (req, res) => {
     try {
       const { id } = req.query
       if (!id) return res.status(400).json({ message: 'Missing stockIn ID' })
 
-      const deletedStockIn  = await StockIn.findByIdAndDelete(id)
-      if (!deletedStockIn ) return res.status(404).json({ message: 'StockIn not found' })
+      const stockInt = await StockInt.findById(id)
+      if (!stockInt) return res.status(404).json({ message: 'StockIn not found' })
+
+      await ProductBatch.deleteMany({ stockIntId: stockInt._id })
+
+      await StockInt.findByIdAndDelete(id)
 
       res.status(200).json({ message: 'StockIn deleted successfully' })
     } catch (err) {

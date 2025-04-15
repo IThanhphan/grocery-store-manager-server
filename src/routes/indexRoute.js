@@ -8,6 +8,7 @@ const stockInRoute = require('./stockIntRoute')
 const attendanceSalaryRoute = require('./attendanceSalaryRoute')
 const brandRoute = require('./brandRoute')
 const unitRoute = require('./unitRoute')
+const productBatch = require('./productBatchRoute')
 
 function route(app) {
   app.use('/auth', authRoute)
@@ -16,10 +17,11 @@ function route(app) {
   app.use('/customer', customerRoute)
   app.use('/order', orderRoute)
   app.use('/category', categoryRoute)
-  app.use('/stock-in', stockInRoute) 
+  app.use('/stock-in', stockInRoute)
   app.use('/attendance-salary', attendanceSalaryRoute)
   app.use('/brand', brandRoute)
   app.use('/unit', unitRoute)
+  app.use('/product-batch', productBatch)
 }
 
 module.exports = route
