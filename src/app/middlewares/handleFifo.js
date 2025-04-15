@@ -1,4 +1,4 @@
-const ProductBatch = require('./productBatchModel')
+const ProductBatch = require('../models/productBatchModel')
 
 async function handleFifo(productId, quantityNeeded) {
   // Lấy tất cả các lô hàng của sản phẩm cần bán, sắp xếp theo FIFO (expirationDate và createdAt)

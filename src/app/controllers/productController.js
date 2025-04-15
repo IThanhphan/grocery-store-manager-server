@@ -22,10 +22,6 @@ const productController = {
         supplierName: product.supplierId ? product.supplierId.name : 'Unknown',
         brand: product.brandId ? product.brandId.name : 'Unknown',
         unit: product.unitId ? product.unitId.name : 'Unknown',
-        importPrice: product.importPrice,
-        sellPrice: product.sellPrice,
-        stock: product.stock,
-        expirationDate: product.expirationDate,
         image: product.image,
         createdAt: product.createdAt,
         updatedAt: product.updatedAt
@@ -60,10 +56,6 @@ const productController = {
         unit: product.unitId ? product.unitId.name : 'Unknown',
         brand: product.brand,
         unit: product.unit,
-        importPrice: product.importPrice,
-        sellPrice: product.sellPrice,
-        stock: product.stock,
-        expirationDate: product.expirationDate,
         image: product.image,
         createdAt: product.createdAt,
         updatedAt: product.updatedAt
@@ -78,9 +70,9 @@ const productController = {
     try {
       console.log('req.body:', req.body)
       console.log('req.file:', req.file)
-      const { name, categoryName, supplierName, brandName, unitName, importPrice, sellPrice, stock, expirationDate } = req.body
+      const { name, categoryName, supplierName, brandName, unitName } = req.body
 
-      if (!name || !categoryName || !supplierName || !brandName || !unitName || !importPrice || !sellPrice || !expirationDate) {
+      if (!name || !categoryName || !supplierName || !brandName || !unitName) {
         return res.status(400).json({ message: 'Missing required fields' })
       }
 
@@ -99,7 +91,7 @@ const productController = {
       // Lấy đường dẫn ảnh từ multer
       const image = req.file ? `/uploads/${req.file.filename}` : null
 
-      console.log({ name, categoryName, supplierName, brandName, unitName, importPrice, sellPrice, stock, expirationDate, image })
+      console.log({ name, categoryName, supplierName, brandName, unitName, image })
 
       const newProduct = new Product({
         name,
@@ -107,10 +99,6 @@ const productController = {
         supplierId: supplier._id,
         brandId: brand._id,
         unitId: unit._id,
-        importPrice,
-        sellPrice,
-        stock,
-        expirationDate,
         image
       })
 
@@ -129,10 +117,6 @@ const productController = {
         supplierName: populatedProduct.supplierId ? populatedProduct.supplierId.name : 'Unknown',
         brandName: populatedProduct.brandId ? populatedProduct.brandId.name : 'Unknown',
         unitName: populatedProduct.unitId ? populatedProduct.unitId.name : 'Unknown',
-        importPrice: populatedProduct.importPrice,
-        sellPrice: populatedProduct.sellPrice,
-        stock: populatedProduct.stock,
-        expirationDate: populatedProduct.expirationDate,
         image: populatedProduct.image,
         createdAt: populatedProduct.createdAt,
         updatedAt: populatedProduct.updatedAt
@@ -193,10 +177,6 @@ const productController = {
         supplierName: updatedProduct.supplierId ? updatedProduct.supplierId.name : 'Unknown',
         brandName: updatedProduct.brandId ? updatedProduct.brandId.name : 'Unknown',
         unitName: updatedProduct.unitId ? updatedProduct.unitId.name : 'Unknown',
-        importPrice: updatedProduct.importPrice,
-        sellPrice: updatedProduct.sellPrice,
-        stock: updatedProduct.stock,
-        expirationDate: updatedProduct.expirationDate,
         image: updatedProduct.image,
         createdAt: updatedProduct.createdAt,
         updatedAt: updatedProduct.updatedAt
@@ -251,44 +231,6 @@ const productController = {
     }
   },
 
-  // Lấy danh sách sản phẩm gần hết hạn
-  getNearlyExpiredProducts: async (req, res) => {
-    try {
-      const { daysLeft } = req.query
-
-      if (!daysLeft || isNaN(daysLeft) || daysLeft <= 0) {
-        return res.status(400).json({ message: "Invalid daysLeft value" })
-      }
-
-      const today = new Date()
-      const deadlineDate = new Date()
-      deadlineDate.setDate(today.getDate() + parseInt(daysLeft))
-
-      const nearlyExpiredProducts = await Product.find({
-        expirationDate: { $gte: today, $lte: deadlineDate }
-      }).populate('supplierId')
-
-      res.status(200).json(nearlyExpiredProducts)
-    } catch (err) {
-      res.status(500).json({ error: err.message })
-    }
-  },
-
-  //Lấy sản phẩm đã hết hạn
-  getExpiredProducts: async (req, res) => {
-    try {
-      const today = new Date()
-
-      const expiredProducts = await Product.find({
-        expirationDate: { $lt: today }
-      }).populate('supplierId')
-
-      res.status(200).json(expiredProducts)
-    } catch (err) {
-      res.status(500).json({ error: err.message })
-    }
-  },
-
   // Lấy danh sách sản phẩm theo thương hiệu cụ thể
   getProductsByBrand: async (req, res) => {
     try {
@@ -320,12 +262,6 @@ const productController = {
         supplierName: product.supplierId ? product.supplierId.name : 'Unknown',
         brandName: product.brandId ? product.brandId.name : 'Unknown',
         unitName: product.unitId ? product.unitId.name : 'Unknown',
-        brand: product.brand,
-        unit: product.unit,
-        importPrice: product.importPrice,
-        sellPrice: product.sellPrice,
-        stock: product.stock,
-        expirationDate: product.expirationDate,
         image: product.image,
         createdAt: product.createdAt,
         updatedAt: product.updatedAt
@@ -370,10 +306,6 @@ const productController = {
         unitName: product.unitId ? product.unitId.name : 'Unknown',
         brand: product.brand,
         unit: product.unit,
-        importPrice: product.importPrice,
-        sellPrice: product.sellPrice,
-        stock: product.stock,
-        expirationDate: product.expirationDate,
         image: product.image,
         createdAt: product.createdAt,
         updatedAt: product.updatedAt

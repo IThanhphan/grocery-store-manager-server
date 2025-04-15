@@ -2,6 +2,7 @@ const Order = require('../models/orderModel')
 const Product = require('../models/productModel')
 const Customer = require('../models/customerModel')
 const User = require('../models/userModel')
+const handleFifo = require('../middlewares/handleFifo')
 
 const orderController = {
   // Lấy danh sách tất cả hóa đơn
@@ -70,53 +71,50 @@ const orderController = {
   // Thêm một hóa đơn mới
   createOrder: async (req, res) => {
     try {
-      const { customerName, userName, paymentMethod, items } = req.body
+      const { customerName, userName, paymentMethod, items, otherPaidAmount = 0 } = req.body
 
       if (!customerName || !userName || items.length === 0) {
         return res.status(400).json({ message: 'Missing required fields' })
       }
 
-      const customer = await Customer.findOne({ name: customerName })
-      if (!customer) return res.status(404).json({ message: 'Customer not found' })
-      const customerId = customer._id
+      const customer = await Customer.findOne({ name: customerName });
+      if (!customer) return res.status(404).json({ message: 'Customer not found' });
+      const customerId = customer._id;
 
-      let userId = null
-      if (userName) {
-        const user = await User.findOne({ name: userName })
-        if (!user) return res.status(404).json({ message: 'User not found' })
-        userId = user._id
-      }
+      const user = await User.findOne({ name: userName });
+      if (!user) return res.status(404).json({ message: 'User not found' });
+      const userId = user._id;
 
+      const orderItems = []
       let totalAmount = 0
 
-      const processedItems = await Promise.all(items.map(async (item) => {
-        const product = await Product.findOne({ name: item.productName })
-        if (!product) throw new Error(`Product not found: ${item.productName}`)
+      for (const item of items) {
+        const product = await Product.findOne({ name: item.productName });
+        if (!product) throw new Error(`Product not found: ${item.productName}`);
 
-        product.stock -= stock;
-        await product.save();
+        const usedBatches = await handleFifo(product._id, item.quantity);
 
-        const quantity = item.quantity
-        const unitPrice = product.sellPrice
-        const totalPrice = unitPrice * quantity
-
-        totalAmount += totalPrice
-
-        return {
-          productId: product._id,
-          quantity,
-          sellPrice: totalPrice
+        let remainingQty = item.quantity;
+        for (const batch of usedBatches) {
+          const useQty = Math.min(batch.usedQuantity, remainingQty);
+          orderItems.push({
+            productId: product._id,
+            quantity: useQty,
+            sellPrice: batch.sellPrice
+          });
+          totalAmount += useQty * batch.sellPrice;
+          remainingQty -= useQty;
         }
-      }))
+      }
 
-      console.log({ customerName, userName, paymentMethod, items: processedItems })
+      console.log({ customerName, userName, paymentMethod, items: orderItems })
 
       const newOrder = new Order({
         customerId,
         userId,
         totalAmount,
         paymentMethod,
-        items: processedItems,
+        items: orderItems,
       });
 
       await newOrder.save()
