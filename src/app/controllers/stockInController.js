@@ -82,12 +82,9 @@ const productController = {
       if (!supplier) return res.status(404).json({ message: 'Supplier not found' })
       const supplierId = supplier._id
 
-      let userId = null
-      if (userName) {
-        const user = await User.findOne({ name: userName })
-        if (!user) return res.status(404).json({ message: 'User not found' })
-        userId = user._id
-      }
+      const user = await User.findOne({ name: userName })
+      if (!user) return res.status(404).json({ message: 'User not found' })
+      userId = user._id
 
       let totalAmount = 0
 
@@ -113,7 +110,7 @@ const productController = {
         }
       }))
 
-      console.log({ customerName, userName, paymentMethod, items: processedItems })
+      console.log({ supplierName, userName, items: processedItems })
 
       const newStockInt = new StockInt({
         supplierId: supplier._id,

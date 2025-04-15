@@ -1,6 +1,5 @@
 const Product = require('../models/productModel')
 const Category = require('../models/categoryModel')
-const Supplier = require('../models/supplierModel')
 const Brand = require('../models/brandModel')
 const Unit = require('../models/unitModel')
 
@@ -10,7 +9,6 @@ const productController = {
     try {
       const products = await Product.find()
         .populate('categoryId', 'name')
-        .populate('supplierId', 'name')
         .populate('brandId', 'name')
         .populate('unitId', 'name')
 
@@ -19,7 +17,6 @@ const productController = {
         productId: product.productId,
         name: product.name,
         categoryName: product.categoryId ? product.categoryId.name : 'Unknown',
-        supplierName: product.supplierId ? product.supplierId.name : 'Unknown',
         brand: product.brandId ? product.brandId.name : 'Unknown',
         unit: product.unitId ? product.unitId.name : 'Unknown',
         image: product.image,
@@ -41,7 +38,6 @@ const productController = {
 
       const product = await Product.findById(id)
         .populate('categoryId', 'name')
-        .populate('supplierId', 'name')
         .populate('brandId', 'name')
         .populate('unitId', 'name')
 
@@ -51,7 +47,6 @@ const productController = {
         productId: product.productId,
         name: product.name,
         categoryName: product.categoryId ? product.categoryId.name : 'Unknown',
-        supplierName: product.supplierId ? product.supplierId.name : 'Unknown',
         brand: product.brandId ? product.brandId.name : 'Unknown',
         unit: product.unitId ? product.unitId.name : 'Unknown',
         brand: product.brand,
@@ -70,17 +65,14 @@ const productController = {
     try {
       console.log('req.body:', req.body)
       console.log('req.file:', req.file)
-      const { name, categoryName, supplierName, brandName, unitName } = req.body
+      const { name, categoryName, brandName, unitName } = req.body
 
-      if (!name || !categoryName || !supplierName || !brandName || !unitName) {
+      if (!name || !categoryName || !brandName || !unitName) {
         return res.status(400).json({ message: 'Missing required fields' })
       }
 
       const category = await Category.findOne({ name: categoryName })
       if (!category) return res.status(404).json({ message: 'Category not found' })
-
-      const supplier = await Supplier.findOne({ name: supplierName })
-      if (!supplier) return res.status(404).json({ message: 'Supplier not found' })
 
       const brand = await Brand.findOne({ name: brandName })
       if (!brand) return res.status(404).json({ message: 'Brand not found' })
@@ -91,12 +83,11 @@ const productController = {
       // Lấy đường dẫn ảnh từ multer
       const image = req.file ? `/uploads/${req.file.filename}` : null
 
-      console.log({ name, categoryName, supplierName, brandName, unitName, image })
+      console.log({ name, categoryName, brandName, unitName, image })
 
       const newProduct = new Product({
         name,
         categoryId: category._id,
-        supplierId: supplier._id,
         brandId: brand._id,
         unitId: unit._id,
         image
@@ -106,7 +97,6 @@ const productController = {
 
       const populatedProduct = await Product.findById(newProduct._id)
         .populate('categoryId', 'name')
-        .populate('supplierId', 'name')
         .populate('brandId', 'name')
         .populate('unitId', 'name')
 
@@ -114,7 +104,6 @@ const productController = {
         productId: populatedProduct.productId,
         name: populatedProduct.name,
         categoryName: populatedProduct.categoryId ? populatedProduct.categoryId.name : 'Unknown',
-        supplierName: populatedProduct.supplierId ? populatedProduct.supplierId.name : 'Unknown',
         brandName: populatedProduct.brandId ? populatedProduct.brandId.name : 'Unknown',
         unitName: populatedProduct.unitId ? populatedProduct.unitId.name : 'Unknown',
         image: populatedProduct.image,
@@ -141,13 +130,6 @@ const productController = {
         updateData.categoryId = category._id
       }
 
-      // Nếu có supplierName, tìm supplierId
-      if (req.body.supplierName) {
-        const supplier = await Supplier.findOne({ name: req.body.supplierName })
-        if (!supplier) return res.status(404).json({ message: 'Supplier not found' })
-        updateData.supplierId = supplier._id
-      }
-
       // Nếu có brandName, tìm brandId
       if (req.body.brandName) {
         const brand = await Brand.findOne({ name: req.body.brandName })
@@ -164,7 +146,6 @@ const productController = {
 
       const updatedProduct = await Product.findByIdAndUpdate(id, updateData, { new: true, runValidators: true })
         .populate('categoryId', 'name')
-        .populate('supplierId', 'name')
         .populate('brandId', 'name')
         .populate('unitId', 'name')
       if (!updatedProduct) return res.status(404).json({ message: 'Product not found' })
@@ -174,7 +155,6 @@ const productController = {
         productId: updatedProduct.productId,
         name: updatedProduct.name,
         categoryName: updatedProduct.categoryId ? updatedProduct.categoryId.name : 'Unknown',
-        supplierName: updatedProduct.supplierId ? updatedProduct.supplierId.name : 'Unknown',
         brandName: updatedProduct.brandId ? updatedProduct.brandId.name : 'Unknown',
         unitName: updatedProduct.unitId ? updatedProduct.unitId.name : 'Unknown',
         image: updatedProduct.image,
@@ -216,21 +196,6 @@ const productController = {
     }
   },
 
-  // Lấy danh sách sản phẩm của một nhà cung cấp
-  getProductsBySupplier: async (req, res) => {
-    try {
-      const { supplierId } = req.query
-      if (!supplierId) return res.status(400).json({ message: 'Missing supplierId' })
-
-      const products = await Product.find({ supplierId: supplierId })
-      if (products.length === 0) return res.status(404).json({ message: 'No products found in this supplier' })
-
-      res.status(200).json(products)
-    } catch (err) {
-      res.status(500).json({ error: err.message })
-    }
-  },
-
   // Lấy danh sách sản phẩm theo thương hiệu cụ thể
   getProductsByBrand: async (req, res) => {
     try {
@@ -246,7 +211,6 @@ const productController = {
 
       const products = await Product.find({ brandId: brandDoc._id })
         .populate('categoryId', 'name')
-        .populate('supplierId', 'name')
         .populate('brandId', 'name')
         .populate('unitId', 'name')
 
@@ -259,7 +223,6 @@ const productController = {
         productId: product.productId,
         name: product.name,
         categoryName: product.categoryId ? product.categoryId.name : 'Unknown',
-        supplierName: product.supplierId ? product.supplierId.name : 'Unknown',
         brandName: product.brandId ? product.brandId.name : 'Unknown',
         unitName: product.unitId ? product.unitId.name : 'Unknown',
         image: product.image,
@@ -288,7 +251,6 @@ const productController = {
 
       const products = await Product.find({ unitId: unitDoc._id })
         .populate('categoryId', 'name')
-        .populate('supplierId', 'name')
         .populate('brandId', 'name')
         .populate('unitId', 'name')
 
@@ -301,7 +263,6 @@ const productController = {
         productId: product.productId,
         name: product.name,
         categoryName: product.categoryId ? product.categoryId.name : 'Unknown',
-        supplierName: product.supplierId ? product.supplierId.name : 'Unknown',
         brandName: product.brandId ? product.brandId.name : 'Unknown',
         unitName: product.unitId ? product.unitId.name : 'Unknown',
         brand: product.brand,

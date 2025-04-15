@@ -9,7 +9,6 @@ router.post('/add-a-new-product', upload.single('image'), productController.addP
 router.put('/update-product-information', productController.updateProduct)
 router.delete('/remove-product-from-system', productController.deleteProduct)
 router.get('/get-product-list-by-category', productController.getProductsByCategory)
-router.get('/get-a-list-of-products-from-a-supplier', productController.getProductsBySupplier)
 router.get('/get-products-by-brand', productController.getProductsByBrand)
 router.get('/get-products-by-unit', productController.getProductsByUnit)
 

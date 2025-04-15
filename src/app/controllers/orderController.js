@@ -97,11 +97,15 @@ const orderController = {
         let remainingQty = item.quantity;
         for (const batch of usedBatches) {
           const useQty = Math.min(batch.usedQuantity, remainingQty);
+          const itemTotal = batch.sellPrice * useQty;
+
           orderItems.push({
             productId: product._id,
             quantity: useQty,
-            sellPrice: batch.sellPrice
+            sellPrice: batch.sellPrice,
+            totalPrice: itemTotal
           });
+
           totalAmount += useQty * batch.sellPrice;
           remainingQty -= useQty;
         }
@@ -131,7 +135,26 @@ const orderController = {
       const { id } = req.query;
       if (!id) return res.status(400).json({ message: 'Missing Order ID' });
 
-      let updateData = { ...req.body };
+      const oldOrder = await Order.findById(id);
+      if (!oldOrder) return res.status(404).json({ message: 'Order not found' });
+
+      for (const item of oldOrder.items) {
+        const batches = await ProductBatch.find({
+          productId: item.productId,
+          sellPrice: item.sellPrice
+        });
+
+        let remaining = item.quantity;
+        for (const batch of batches) {
+          if (remaining <= 0) break;
+          const canReturn = Math.min(item.quantity, remaining);
+          batch.quantity += canReturn;
+          remaining -= canReturn;
+          await batch.save();
+        }
+      }
+
+      let updateData = {};
 
       // Nếu có customerName, tìm customerId
       if (req.body.customerName) {
@@ -147,21 +170,38 @@ const orderController = {
         updateData.userId = user._id;
       }
 
-      // Nếu có items, xử lý productId từ productName
-      if (req.body.items) {
-        updateData.items = await Promise.all(req.body.items.map(async (item) => {
-          const product = await Product.findOne({ name: item.productName });
-          if (!product) throw new Error(`Product not found: ${item.productName}`);
-          return {
+      const items = [];
+      let totalAmount = 0;
+
+      for (const item of req.body.items) {
+        const product = await Product.findOne({ name: item.productName });
+        if (!product) throw new Error(`Product not found: ${item.productName}`);
+
+        const usedBatches = await handleFifo(product._id, item.quantity);
+        let remainingQty = item.quantity;
+
+        for (const batch of usedBatches) {
+          const useQty = Math.min(batch.usedQuantity, remainingQty);
+          const totalPrice = batch.sellPrice * useQty;
+
+          items.push({
             productId: product._id,
-            quantity: item.quantity,
-            sellPrice: item.sellPrice
-          };
-        }));
+            quantity: useQty,
+            sellPrice: batch.sellPrice,
+            totalPrice
+          });
+
+          totalAmount += totalPrice;
+          remainingQty -= useQty;
+        }
       }
 
+      updateData.items = items;
+      updateData.totalAmount = totalAmount;
+      if (req.body.paymentMethod) updateData.paymentMethod = req.body.paymentMethod;
+      if (req.body.otherPaidAmount !== undefined) updateData.otherPaidAmount = req.body.otherPaidAmount;
+
       const updatedOrder = await Order.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
-      if (!updatedOrder) return res.status(404).json({ message: 'Order not found' });
 
       res.status(200).json(updatedOrder);
     } catch (error) {

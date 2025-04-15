@@ -58,7 +58,6 @@ Table Product {
   _id ObjectId [pk]
   name String
   categoryId ObjectId [ref: > Category._id]
-  supplierId ObjectId [ref: > Supplier._id]
   brandId ObjectId [ref: > Brand._id]
   unitId ObjectId [ref: > Unit._id]
   image String
