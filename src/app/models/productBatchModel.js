@@ -20,17 +20,14 @@ const productBatchSchema = new mongoose.Schema({
   quantity: {
     type: Number,
     required: true,
-    min: 1
   },
   importPrice: {
     type: Number,
     required: true,
-    min: 0
   },
   sellPrice: {
     type: Number,
     required: true,
-    min: 0
   },
   expirationDate: {
     type: Date,

@@ -7,5 +7,6 @@ router.get('/get-product-batch-by-id', productBatchController.getProductBatchByI
 router.post('/create-product-batch', productBatchController.createProductBatch)
 router.put('/update-product-batch', productBatchController.updateProductBatch)
 router.delete('/delete-product-batch', productBatchController.deleteProductBatch)
+router.get('/get-product-quantity', productBatchController.getProductQuantity);
 
 module.exports = router

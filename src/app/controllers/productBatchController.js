@@ -135,6 +135,28 @@ const productBatchController = {
     } catch (err) {
       res.status(500).json({ error: err.message })
     }
+  },
+
+  // Lấy số lượng của 1 sản phẩm
+  getProductQuantity: async (req, res) => {
+    try {
+      const { productName } = req.query;
+      if (!productName) return res.status(400).json({ message: 'Missing productName' });
+  
+      const product = await Product.findOne({ name: productName });
+      if (!product) return res.status(404).json({ message: 'Product not found' });
+  
+      const batches = await ProductBatch.find({ productId: product._id });
+      const totalQuantity = batches.reduce((sum, batch) => sum + batch.quantity, 0);
+  
+      res.status(200).json({
+        productId: product.productId,
+        productName: product.name,
+        stockQuantity: totalQuantity
+      });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   }
 }
 
