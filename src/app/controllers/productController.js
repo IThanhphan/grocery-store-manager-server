@@ -2,6 +2,7 @@ const Product = require('../models/productModel')
 const Category = require('../models/categoryModel')
 const Brand = require('../models/brandModel')
 const Unit = require('../models/unitModel')
+const ProductBatch = require('../models/productBatchModel')
 
 const productController = {
   // Lấy danh sách tất cả sản phẩm
@@ -12,16 +13,31 @@ const productController = {
         .populate('brandId', 'name')
         .populate('unitId', 'name')
 
-      const formattedProducts = products.map(product => ({
-        _id: product._id,
-        productId: product.productId,
-        name: product.name,
-        categoryName: product.categoryId ? product.categoryId.name : 'Unknown',
-        brand: product.brandId ? product.brandId.name : 'Unknown',
-        unit: product.unitId ? product.unitId.name : 'Unknown',
-        image: product.image,
-        createdAt: product.createdAt,
-        updatedAt: product.updatedAt
+      const formattedProducts = await Promise.all(products.map(async product => {
+        const batches = await ProductBatch.find({ productId: product._id })
+
+        const totalStock = batches.reduce((sum, b) => sum + b.quantity, 0)
+
+        const latestBatch = batches.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0]
+
+        const batchesWithStock = batches.filter(b => b.quantity > 0 && b.expirationDate)
+        const soonestExpiry = batchesWithStock.sort((a, b) => new Date(a.expirationDate) - new Date(b.expirationDate))[0]
+
+        return {
+          _id: product._id,
+          productId: product.productId,
+          name: product.name,
+          categoryName: product.categoryId ? product.categoryId.name : 'Unknown',
+          brand: product.brandId ? product.brandId.name : 'Unknown',
+          unit: product.unitId ? product.unitId.name : 'Unknown',
+          image: product.image,
+          stock: totalStock,
+          importPrice: latestBatch ? latestBatch.importPrice : 0,
+          sellPrice: latestBatch ? latestBatch.sellPrice : 0,
+          expirationDate: soonestExpiry ? soonestExpiry.expirationDate : null,
+          createdAt: product.createdAt,
+          updatedAt: product.updatedAt
+        }
       }))
 
       res.status(200).json(formattedProducts)
@@ -43,15 +59,26 @@ const productController = {
 
       if (!product) return res.status(404).json({ message: 'Product not found' })
 
+      const batches = await ProductBatch.find({ productId: product._id })
+
+      const totalStock = batches.reduce((sum, b) => sum + b.quantity, 0)
+
+      const latestBatch = batches.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0]
+
+      const batchesWithStock = batches.filter(b => b.quantity > 0 && b.expirationDate)
+      const soonestExpiry = batchesWithStock.sort((a, b) => new Date(a.expirationDate) - new Date(b.expirationDate))[0]
+
       res.status(200).json({
         productId: product.productId,
         name: product.name,
         categoryName: product.categoryId ? product.categoryId.name : 'Unknown',
         brand: product.brandId ? product.brandId.name : 'Unknown',
         unit: product.unitId ? product.unitId.name : 'Unknown',
-        brand: product.brand,
-        unit: product.unit,
         image: product.image,
+        stock: totalStock,
+        importPrice: latestBatch ? latestBatch.importPrice : 0,
+        sellPrice: latestBatch ? latestBatch.sellPrice : 0,
+        expirationDate: soonestExpiry ? soonestExpiry.expirationDate : null,
         createdAt: product.createdAt,
         updatedAt: product.updatedAt
       })
