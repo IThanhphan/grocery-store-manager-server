@@ -62,6 +62,6 @@ stockIntSchema.pre('validate', async function (next) {
 })
 
 
-const { createProductBatches } = require('./stockIntMiddleware')
+const { createProductBatches } = require('../middlewares/stockIntMiddleware')
 stockIntSchema.post('save', createProductBatches)
 module.exports = mongoose.model('StockInt', stockIntSchema)  
